@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: locatebase-api
+  mongodb:
+    uri: ${MONGODB_URI}
+    database: locatebase
