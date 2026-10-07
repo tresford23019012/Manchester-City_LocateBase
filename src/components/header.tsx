@@ -1,16 +1,16 @@
 import { View, Pressable, TextInput, StyleSheet, ImageBackground, } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function Header() {
+  const insets = useSafeAreaInsets();
+
   return (
+    <View style={styles.container}>
+
     <View style={styles.header}>
 
-    <ImageBackground
-      source={require("./assets/images/header-bg.svg")}
-      style={styles.header}
-      imageStyle={styles.backgroundImage}
-      resizeMode="cover"
-      >
+   
       {/* Menu */}
         <Pressable style={styles.menuButton}>
             <Ionicons name="menu" size={28} color="#54200F" />
@@ -31,14 +31,20 @@ export default function Header() {
         <Pressable style={styles.profileButton}>
             <Ionicons name="person" size={22} color="#FFFFFF" />
         </Pressable>
-     </ImageBackground>
+    </View>
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+
+    container: {
+  
+  },
+
   header: {
-    height: 120,
+    height: 128,
     backgroundColor: "#F58A24",
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,

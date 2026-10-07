@@ -9,7 +9,7 @@ export default function HomeScreen() {
       <Header />
 
       <View style={styles.content}>
-        <Text style={styles.title}>My first Ap</Text>
+        <Text style={styles.title}>My first App</Text>
 
         <Text style={styles.subtitle}>
           I am building a mobile app!
@@ -29,7 +29,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#FAF8F3",
   },
 
   content: {
