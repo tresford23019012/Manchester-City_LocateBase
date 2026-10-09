@@ -1,16 +1,20 @@
 import { View, Pressable, TextInput, StyleSheet, ImageBackground, } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function Header() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={styles.container}>
 
-    <View style={styles.header}>
 
-   
+    <ImageBackground 
+    source={require("../../assets/images/topbar_pic.png")}
+    style={styles.header}
+    imageStyle={styles.headerImage}>
+    
+
       {/* Menu */}
         <Pressable style={styles.menuButton}>
             <Ionicons name="menu" size={28} color="#54200F" />
@@ -31,30 +35,45 @@ export default function Header() {
         <Pressable style={styles.profileButton}>
             <Ionicons name="person" size={22} color="#FFFFFF" />
         </Pressable>
-    </View>
 
-    </View>
+        <LinearGradient
+        colors={["transparent", "#F8F5F0"]}
+        style={styles.bottomFade}
+        pointerEvents="none"
+       />
+       
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+header: {
+  height: 140,
+  borderBottomLeftRadius: 40,
+  borderBottomRightRadius: 40,
+  overflow: "hidden",
+  position: "relative",
 
-    container: {
-  
-  },
+  flexDirection: "row",
+  alignItems: "center",
+  paddingHorizontal: 20,
+  paddingTop: 30,
+  gap: 15,
+},
 
-  header: {
-    height: 128,
-    backgroundColor: "#F58A24",
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+headerImage: {
+  resizeMode: "cover",
+  borderBottomLeftRadius: 40,
+  borderBottomRightRadius: 40,
+},
 
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 30,
-    gap: 15,
-  },
+bottomFade: {
+  position: "absolute",
+  left: 0,
+  right: 0,
+  bottom: 0,
+  height: 50,
+},
 
   menuButton: {
     width: 48,
@@ -66,8 +85,8 @@ const styles = StyleSheet.create({
   },
 
   backgroundImage: {
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
   },
 
   searchContainer: {

@@ -1,41 +1,103 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
+import { usePathname, router } from "expo-router";
 
 export default function Footer() {
+  const pathname = usePathname();
+
   return (
-    <BlurView
-  intensity={80}
-  tint="light"
-  style={styles.footer}
->
-  <View style={styles.footerContent}>
+    <View style={styles.footerShadow}>
+      <BlurView intensity={80} tint="light" style={styles.footer}>
+        <View style={styles.footerContent}>
 
-    <Pressable style={styles.menuButton}>
-      <Ionicons name="compass" size={28} color="#54200F" />
-      <Text style={styles.menuText}>Explore</Text>
-    </Pressable>
+          {/*Explore*/}
+          <Pressable style={styles.menuButton} onPress={() => router.push("/")}>
+            <Ionicons
+              name={pathname === "/" ? "compass" : "compass-outline"}
+              size={28}
+              color={pathname === "/" ? "#54200F" : "#864612"}
+            />
 
-    <Pressable style={styles.menuButton}>
-      <Ionicons name="location-outline" size={28} color="#54200F" />
-      <Text style={styles.menuText}>Map</Text>
-    </Pressable>
+            <Text
+              style={[styles.menuText, pathname === "/" && styles.activeText]}
+            >
+              Explore
+            </Text>
+          </Pressable>
 
-    <Pressable style={styles.menuButton}>
-      <Ionicons name="notifications-outline" size={28} color="#54200F" />
-      <Text style={styles.menuText}>Notifications</Text>
-    </Pressable>
+          {/*Map*/}
+          <Pressable
+            style={styles.menuButton}
+            onPress={() => router.push("/map")}
+          >
+            <Ionicons
+              name={pathname === "/map" ? "location" : "location-outline"}
+              size={28}
+              color={pathname === "/map" ? "#54200F" : "#864612"}
+            />
 
-  </View>
-</BlurView>
+            <Text
+              style={[
+                styles.menuText,
+                pathname === "/map" && styles.activeText,
+              ]}
+            >
+              Map
+            </Text>
+          </Pressable>
+
+          {/*Notification*/}
+          <Pressable
+            style={styles.menuButton}
+            onPress={() => router.push("/notifications")}
+          >
+            <Ionicons
+              name={
+                pathname === "/notifications"
+                  ? "notifications"
+                  : "notifications-outline"
+              }
+              size={28}
+              color={pathname === "/notifications" ? "#54200F" : "#8b341a"}
+            />
+
+            <Text
+              style={[
+                styles.menuText,
+                pathname === "/notifications" && styles.activeText,
+              ]}
+            >
+              Notifications
+            </Text>
+          </Pressable>
+          
+        </View>
+      </BlurView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  footerShadow: {
+    marginHorizontal: 20,
+    marginBottom: 40,
+
+    backgroundColor: "transparent",
+
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+
+    elevation: 16,
+  },
+
   footer: {
     height: 80,
-    marginHorizontal: 20,
-    marginBottom: 20,
 
     borderRadius: 30,
     overflow: "hidden",
@@ -45,9 +107,7 @@ const styles = StyleSheet.create({
 
     // Only ONE border
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.35)",
-
-    elevation: 8,
+    borderColor: "rgba(231, 188, 168, 0.35)",
   },
 
   footerContent: {
@@ -68,4 +128,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
     textAlign: "center",
   },
+
+  activeText: {
+  color: "#54200F",
+  fontWeight: "600",
+},
 });
