@@ -1,10 +1,47 @@
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, StyleSheet, Pressable, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { usePathname, router } from "expo-router";
+import { useEffect, useRef } from "react";
 
 export default function Footer() {
   const pathname = usePathname();
+
+  const exploreScale = useRef(new Animated.Value(0.8)).current;
+
+    useEffect(() => {
+      Animated.spring(exploreScale, {
+        toValue: pathname === "/" ? 1.3 : 1,
+        useNativeDriver: true,
+        friction: 6,
+        tension: 100,
+      }).start();
+    }, [pathname, exploreScale]);
+
+    const exploreBar = useRef(new Animated.Value(0)).current;
+    const mapBar = useRef(new Animated.Value(0)).current;
+    const notificationsBar = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+      const bars = [
+        { animation: exploreBar, active: pathname === "/" },
+        { animation: mapBar, active: pathname === "/map" },
+        {
+          animation: notificationsBar,
+          active: pathname === "/notifications",
+        },
+      ];
+
+      bars.forEach(({ animation, active }) => {
+        animation.stopAnimation();
+
+        Animated.timing(animation, {
+          toValue: active ? 35 : 0,
+          duration: 500,
+          useNativeDriver: false,
+        }).start();
+      });
+    }, [pathname, exploreBar, mapBar, notificationsBar]);
 
   return (
     <View style={styles.footerShadow}>
@@ -12,30 +49,47 @@ export default function Footer() {
         <View style={styles.footerContent}>
 
           {/*Explore*/}
-          <Pressable style={styles.menuButton} onPress={() => router.push("/")}>
-            <Ionicons
-              name={pathname === "/" ? "compass" : "compass-outline"}
-              size={28}
-              color={pathname === "/" ? "#54200F" : "#864612"}
-            />
+          <Pressable style={styles.menuButtons} onPress={() => router.push("/")}>
+            <Animated.View
+              style={{
+                transform: [{ scale: exploreScale }],
+              }} >
+
+              <Ionicons
+                name={pathname === "/" ? "compass" : "compass-outline"}
+                size={28}
+                color={pathname === "/" ? "#54200F" : "#864612"}
+              />
+            </Animated.View>
 
             <Text
               style={[styles.menuText, pathname === "/" && styles.activeText]}
             >
               Explore
             </Text>
+
+            {pathname === "/"  &&  
+            (<Animated.View
+                  style={[
+                    styles.activeBar,
+                    { width: exploreBar },
+                  ]}
+                /> )}
+
           </Pressable>
 
           {/*Map*/}
-          <Pressable
-            style={styles.menuButton}
-            onPress={() => router.push("/map")}
-          >
+          <Pressable style={styles.menuButtons} onPress={() => router.push("/map")}>
+            <Animated.View
+              style={{
+                transform: [{ scale: pathname === "/map" ? 1.3 : 1 }],
+              }} >
             <Ionicons
               name={pathname === "/map" ? "location" : "location-outline"}
               size={28}
               color={pathname === "/map" ? "#54200F" : "#864612"}
             />
+            </Animated.View>
 
             <Text
               style={[
@@ -45,13 +99,23 @@ export default function Footer() {
             >
               Map
             </Text>
+
+            {pathname === "/map"  && 
+            (<Animated.View
+                  style={[
+                    styles.activeBar,
+                    { width: mapBar },
+                  ]}
+                />) }
+
           </Pressable>
 
           {/*Notification*/}
-          <Pressable
-            style={styles.menuButton}
-            onPress={() => router.push("/notifications")}
-          >
+          <Pressable style={styles.menuButtons} onPress={() => router.push("/notifications")}>
+            <Animated.View
+              style={{
+                transform: [{ scale: pathname === "/notifications" ? 1.3 : 1 }],
+              }} >
             <Ionicons
               name={
                 pathname === "/notifications"
@@ -61,6 +125,7 @@ export default function Footer() {
               size={28}
               color={pathname === "/notifications" ? "#54200F" : "#8b341a"}
             />
+            </Animated.View>
 
             <Text
               style={[
@@ -70,6 +135,15 @@ export default function Footer() {
             >
               Notifications
             </Text>
+
+            {pathname === "/notifications"  && 
+            (<Animated.View
+                  style={[
+                    styles.activeBar,
+                    { width: notificationsBar },
+                  ]}
+                /> ) }
+
           </Pressable>
           
         </View>
@@ -114,23 +188,36 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-around",
+    paddingHorizontal: 0,
   },
 
-  menuButton: {
+  menuButtons: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 0,
   },
 
   menuText: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#54200F",
-    marginTop: 2,
+    marginTop: 0,
     textAlign: "center",
   },
 
   activeText: {
-  color: "#54200F",
-  fontWeight: "600",
+    color: "#54200F",
+    fontWeight: "600",
 },
+
+  activeBar: {
+    position: "absolute",
+    bottom: -8,
+    width: 35,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#F58A24",
+    alignSelf: "center",
+  },
 });
