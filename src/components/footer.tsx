@@ -8,15 +8,28 @@ export default function Footer() {
   const pathname = usePathname();
 
   const exploreScale = useRef(new Animated.Value(0.8)).current;
+  const mapScale = useRef(new Animated.Value(0.8)).current;
+  const notificationsScale = useRef(new Animated.Value(0.8)).current;
 
-    useEffect(() => {
-      Animated.spring(exploreScale, {
-        toValue: pathname === "/" ? 1.3 : 1,
+  useEffect(() => {
+    const icons = [
+      { animation: exploreScale, active: pathname === "/" },
+      { animation: mapScale, active: pathname === "/map" },
+      {
+        animation: notificationsScale,
+        active: pathname === "/notifications",
+      },
+    ];
+
+    icons.forEach(({ animation, active }) => {
+      Animated.spring(animation, {
+        toValue: active ? 1.3 : 1,
         useNativeDriver: true,
         friction: 6,
         tension: 100,
       }).start();
-    }, [pathname, exploreScale]);
+    });
+  }, [pathname, exploreScale, mapScale, notificationsScale]);
 
     const exploreBar = useRef(new Animated.Value(0)).current;
     const mapBar = useRef(new Animated.Value(0)).current;
@@ -45,7 +58,8 @@ export default function Footer() {
 
   return (
     <View style={styles.footerShadow}>
-      <BlurView intensity={80} tint="light" style={styles.footer}>
+      <BlurView intensity={100} tint="light" blurMethod="dimezisBlurView" style={styles.footer}>
+        <View style={styles.glassHighlight} pointerEvents="none" />
         <View style={styles.footerContent}>
 
           {/*Explore*/}
@@ -80,16 +94,15 @@ export default function Footer() {
 
           {/*Map*/}
           <Pressable style={styles.menuButtons} onPress={() => router.push("/map")}>
-            <Animated.View
-              style={{
-                transform: [{ scale: pathname === "/map" ? 1.3 : 1 }],
-              }} >
-            <Ionicons
-              name={pathname === "/map" ? "location" : "location-outline"}
-              size={28}
-              color={pathname === "/map" ? "#54200F" : "#864612"}
-            />
-            </Animated.View>
+              <Animated.View
+                style={{ transform: [{ scale: mapScale }] }}
+              >
+                <Ionicons
+                  name={pathname === "/map" ? "location" : "location-outline"}
+                  size={28}
+                  color={pathname === "/map" ? "#54200F" : "#864612"}
+                />
+              </Animated.View>
 
             <Text
               style={[
@@ -113,9 +126,8 @@ export default function Footer() {
           {/*Notification*/}
           <Pressable style={styles.menuButtons} onPress={() => router.push("/notifications")}>
             <Animated.View
-              style={{
-                transform: [{ scale: pathname === "/notifications" ? 1.3 : 1 }],
-              }} >
+              style={{ transform: [{ scale: notificationsScale }] }} >
+
             <Ionicons
               name={
                 pathname === "/notifications"
@@ -159,30 +171,28 @@ const styles = StyleSheet.create({
 
     backgroundColor: "transparent",
 
-    shadowColor: "#000",
+    shadowColor: "#54200F",
     shadowOffset: {
       width: 0,
-      height: 5,
+      height: 6,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
+    shadowOpacity: 0.15,
+    shadowRadius: 14,
 
-    elevation: 16,
+    elevation: 12,
   },
 
-  footer: {
-    height: 80,
+    footer: {
+      height: 80,
+      borderRadius: 30,
+      overflow: "hidden",
 
-    borderRadius: 30,
-    overflow: "hidden",
+      // Frosted glass tint
+      backgroundColor: "rgba(255, 255, 255, 0.75)",
 
-    // VERY subtle glass tint
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-
-    // Only ONE border
-    borderWidth: 1,
-    borderColor: "rgba(231, 188, 168, 0.35)",
-  },
+      borderWidth: 1,
+      borderColor: "rgba(255, 255, 255, 0.45)",
+    },
 
   footerContent: {
     flex: 1,
@@ -191,6 +201,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     paddingHorizontal: 0,
   },
+
+  glassHighlight: {
+  position: "absolute",
+  top: 0,
+  left: 12,
+  right: 12,
+  height: 1,
+  backgroundColor: "rgba(255, 255, 255, 0.95)",
+},
 
   menuButtons: {
     flex: 1,

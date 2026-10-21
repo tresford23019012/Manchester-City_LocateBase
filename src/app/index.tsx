@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,70 +7,73 @@ import {
   ScrollView,
   Image,
   Pressable,
-  FlatList,
+  FlatList, 
+  Animated,
+  ActivityIndicator,
 } from "react-native";
+import { getGuesthouses, type Guesthouse } from "../app/services/api";
+import { Ionicons } from "@expo/vector-icons";
+import { useScrollAnimation } from "../context/ScrollContext";
 
-const categories = ["Recommended", "Popular", "Affordable"];
 
-const hotels = [
-  {
-    id: "1",
-    name: "Thamalakane Guest House",
-    location: "Plot 941, Exit 7, Disaneng Ward, Maun",
-    price: 920,
-    rating: 4.8,
-    reviews: 15,
-    category: "Recommended",
-    image:
-      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=700",
-  },
-  {
-    id: "2",
-    name: "Little Sable",
-    location: "Khwai, Botswana",
-    price: 1200,
-    rating: 4.5,
-    reviews: 24,
-    category: "Popular",
-    image:
-      "https://images.unsplash.com/photo-1575429198097-0414ec08e8cd?w=700",
-  },
-  {
-    id: "3",
-    name: "Riverview Guest House",
-    location: "Serowe, Botswana",
-    price: 650,
-    rating: 4.3,
-    reviews: 18,
-    category: "Affordable",
-    image:
-      "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=700",
-  },
-  {
-    id: "4",
-    name: "Oakwood Guest House",
-    location: "Palapye, Botswana",
-    price: 780,
-    rating: 4.6,
-    reviews: 12,
-    category: "Recommended",
-    image:
-      "https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?w=700",
-  },
-];
+const categories = ["Recommended", "Popular", "Affordable"] as const;
+type Category = (typeof categories)[number];
+
+type GuesthouseCard = {
+  id: string;
+  name: string;
+  location: string;
+  price: number;
+  rating: number;
+  reviews: number;
+  image: string | null;
+}
 
 export default function Home() {
-  const [selectedCategory, setSelectedCategory] =
-    useState("Recommended");
 
+  const scrollY = useScrollAnimation();
+  const [selectedCategory, setSelectedCategory] = useState<Category>("Recommended");
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [guesthouses, setGuesthouses] = useState<Guesthouse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredHotels =
-    selectedCategory === "Recommended"
-      ? hotels
-      : hotels.filter(
-          (hotel) => hotel.category === selectedCategory
-        );
+  const loadGuesthouses = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await getGuesthouses();
+      setGuesthouses(result.content ?? []);
+    } catch (err) {
+      setError (
+        err instanceof Error ? err.message : "Could not load guesthouses."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadGuesthouses();
+  }, [loadGuesthouses]);
+
+  const hotels: GuesthouseCard[] = guesthouses.map((guesthouse) => ({
+    id: guesthouse.id,
+    name: guesthouse.name,
+    location: [guesthouse.address, guesthouse.city].filter(Boolean).join(", "),
+    price: guesthouse.pricePerNight,
+    rating: guesthouse.averageRating,
+    reviews: guesthouse.ratingCount,
+    image: guesthouse.images?.find((image) => Boolean(image?.trim())) ?? null,
+  }))
+
+  const filteredHotels = [...hotels];
+   if (selectedCategory === "Affordable"){
+    filteredHotels.sort((a, b) => a.price - b.price);
+   } else if (selectedCategory === "Popular") {
+    filteredHotels.sort((a, b) => b.rating - a.rating);
+   }
+      
 
   const toggleFavorite = (id: string) => {
     setFavorites((current) =>
@@ -80,22 +83,40 @@ export default function Home() {
     );
   };
 
-  const renderHotelCard = (hotel: (typeof hotels)[number]) => (
-    <View key={hotel.id} style={styles.hotelCard}>
-      <View>
-        <Image
-          source={{ uri: hotel.image }}
-          style={styles.hotelImage}
-        />
+  const renderImage = (
+    image: string | null,
+    imageStyle: object,
+    placeholderStyles: object
+  ) =>
+    image ? (
+      <Image source={{uri: image }} style={imageStyle} />
+    ) : (
+      <View style={[imageStyle, placeholderStyles, styles.imagePlaceholder]}>
+        <Ionicons name="home-outline" size={32} color="#A99B8D" />
+        <Text style={styles.placeholderText}>No image available</Text>
+      </View>
+    );
 
-        <Pressable
-          style={styles.favoriteButton}
+  const renderHotelCard = ({ item: hotel }: { item: GuesthouseCard }) => (
+    <View style={styles.hotelCard}>
+      <View>
+       {renderImage(hotel.image, styles.hotelImage, styles.imagePlaceholder)}
+       <Pressable
+        style={styles.favoriteButton}
           onPress={() => toggleFavorite(hotel.id)}
-        >
-          <Text style={styles.heart}>
-            {favorites.includes(hotel.id) ? "♥" : "♡"}
-          </Text>
-        </Pressable>
+          accessibilityRole="button"
+          accessibilityLabel={
+            favorites.includes(hotel.id)
+              ? `Remove ${hotel.name} from favorites`
+              : `Add ${hotel.name} to favorites`
+          }
+          >
+            <Ionicons
+              name={favorites.includes(hotel.id) ? "heart" : "heart-outline"}
+              size={22}
+              color={favorites.includes(hotel.id) ? "#F44336" : "#54200F"}
+              />
+          </Pressable>
       </View>
 
       <View style={styles.cardDetails}>
@@ -104,21 +125,18 @@ export default function Home() {
         </Text>
 
         <Text numberOfLines={1} style={styles.location}>
-          ♧ {hotel.location}
+          <Ionicons name="location-outline" size={12} /> {hotel.location || hotel.name}
         </Text>
 
         <View style={styles.cardBottom}>
           <View style={styles.rating}>
-            <Text style={styles.ratingText}>★ {hotel.rating}</Text>
+            <Text style={styles.ratingText}> 
+              ★ {Number.isFinite(hotel.rating) ? hotel.rating.toFixed(1) : "—"}
+            </Text>
           </View>
 
-          <Text style={styles.reviews}>
-            {hotel.reviews} reviews
-          </Text>
-
-          <Text style={styles.price}>
-            P{hotel.price}
-          </Text>
+          <Text style={styles.reviews}>{hotel.reviews} reviews</Text>
+          <Text style={styles.price}>P{hotel.price}</Text>
         </View>
 
         <Pressable
@@ -133,12 +151,38 @@ export default function Home() {
     </View>
   );
 
+  const renderStatus = () => {
+    if (loading) {
+      return (
+        <View style={styles.statusContainer}>
+          <ActivityIndicator size="large" color="#F58A24" />
+          <Text style={styles.statusText}>Loading guesthouses...</Text>
+        </View>
+      );
+    }
+
+    if (hotels.length === 0) {
+      return (
+        <View style={styles.statusContainer}>
+          <Ionicons name="bed-outline" size={30} color="#A99B8D" />
+          <Text style={styles.statusText}>No guesthouses found.</Text>
+        </View>
+      );
+    }
+    return null;
+  };
+
   return (
-    <ScrollView
+    <Animated.ScrollView
       style={styles.container}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.content}
-    >
+      contentContainerStyle={[ styles.content, { paddingBottom: 160, paddingTop: 150 }]}
+      onScroll={Animated.event(
+        [{ nativeEvent: { contentOffset: { y: scrollY }}}],
+        { useNativeDriver: true }
+      )}
+      scrollEventThrottle={16}
+          >
       {/* Categories */}
       <ScrollView
         horizontal
@@ -151,23 +195,28 @@ export default function Home() {
             onPress={() => setSelectedCategory(category)}
             style={[
               styles.categoryButton,
-              selectedCategory === category &&
-                styles.selectedCategory,
+              selectedCategory === category && styles.selectedCategory,
             ]}
           >
             <Text
               style={[
                 styles.categoryText,
-                selectedCategory === category &&
-                  styles.selectedCategoryText,
+                selectedCategory === category && styles.selectedCategoryText,
               ]}
             >
-              {category === "Recommended"
-                ? "⌂"
+
+            <Ionicons
+              name={
+               category === "Recommended"
+                ? "home-outline"
                 : category === "Popular"
-                  ? "♨"
-                  : "◇"}{" "}
-              {category}
+                  ? "flame-outline"
+                  : "diamond-outline"
+              }
+              size={18}
+              color={selectedCategory === category ? "#FFFFFF" : "#54200F"} />
+             {" "}
+             {category} 
             </Text>
           </Pressable>
         ))}
@@ -178,63 +227,63 @@ export default function Home() {
         <Text style={styles.sectionTitle}>
           {selectedCategory === "Recommended"
             ? "Recommended for You"
-            : selectedCategory}
+            : selectedCategory === "Popular"
+             ? "Top Rated Guesthouses"
+              : "Affordable Guesthouses"}
         </Text>
       </View>
 
+      {renderStatus()}
+
+      {!loading && !error && hotels.length > 0 && (
       <FlatList
         data={filteredHotels}
         horizontal
         nestedScrollEnabled
-        scrollEnabled={false}
+        scrollEnabled={true}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => renderHotelCard(item)}
+        renderItem={renderHotelCard}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.hotelList}
       />
+      )}
 
       {/* Nearby guest houses */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>
           Nearby Guest Houses
         </Text>
-
-        <Pressable
-          onPress={() => {
-            // We'll connect this to a full listings page later.
-          }}
-        >
-          <Text style={styles.seeAll}>See all →</Text>
+        <Pressable onPress={loadGuesthouses}>
+          <Text style={styles.seeAll}>Refresh ↻</Text>
         </Pressable>
       </View>
 
+      {!loading && !error && (
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.nearbyList}
       >
-        {hotels.map((hotel) => (
-          <View key={hotel.id} style={styles.nearbyCard}>
-            <Image
-              source={{ uri: hotel.image }}
-              style={styles.nearbyImage}
-            />
+       {filteredHotels.map((hotel) => (
+            <View key={hotel.id} style={styles.nearbyCard}>
+              {renderImage(
+                hotel.image,
+                styles.nearbyImage,
+                styles.nearbyImagePlaceholder      
+            )}
 
             <Text numberOfLines={1} style={styles.nearbyName}>
               {hotel.name}
             </Text>
-
             <Text numberOfLines={1} style={styles.nearbyLocation}>
-              {hotel.location}
+              {hotel.location || hotel.name}
             </Text>
-
-            <Text style={styles.nearbyPrice}>
-              P{hotel.price} / night
-            </Text>
+            <Text style={styles.nearbyPrice}>P{hotel.price} / night</Text>
           </View>
         ))}
       </ScrollView>
-    </ScrollView>
+      )}
+    </Animated.ScrollView>
   );
 }
 
@@ -307,6 +356,11 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 155,
     resizeMode: "cover",
+  },
+  imagePlaceholder: {
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#EFE7DE",
   },
   favoriteButton: {
     position: "absolute",
@@ -415,6 +469,27 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "600",
     marginHorizontal: 8,
+    marginTop: 5,
+  },
+  statusContainer: {
+    padding: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statusText: {
+    color: "#62574F",
+    fontSize: 13,
+    marginTop: 10,
+    textAlign: "center",
+  },
+  nearbyImagePlaceholder: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  placeholderText: {
+    color: "#62574F",
+    fontSize: 10,
     marginTop: 5,
   },
 });

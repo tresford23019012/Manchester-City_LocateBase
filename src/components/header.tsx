@@ -1,4 +1,4 @@
-import { View, Pressable, TextInput, StyleSheet, ImageBackground, } from "react-native";
+import { View, Pressable, TextInput, StyleSheet, ImageBackground, Animated } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,8 +7,7 @@ export default function Header() {
   const insets = useSafeAreaInsets();
 
   return (
-
-
+  
     <ImageBackground 
     source={require("../../assets/images/topbar_pic.png")}
     style={styles.header}
