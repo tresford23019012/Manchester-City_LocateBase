@@ -2,9 +2,12 @@ import { View, Pressable, TextInput, StyleSheet, ImageBackground, Animated } fro
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import SideMenu from "./sideMenu";
+import { useState } from "react";
 
 export default function Header() {
   const insets = useSafeAreaInsets();
+  const [menuVisible, setMenuVisible] = useState(false);
 
   return (
   
@@ -13,10 +16,16 @@ export default function Header() {
     style={styles.header}
     imageStyle={styles.headerImage}>
     
-
       {/* Menu */}
-        <Pressable style={styles.menuButton}>
-            <Ionicons name="menu" size={28} color="#54200F" />
+        <Pressable
+          style={styles.menuButton}
+          onPress={() => setMenuVisible(true)}
+        >
+          <Ionicons name="menu" size={28} color="#54200F" />
+          <SideMenu
+            visible={menuVisible}
+            onClose={() => setMenuVisible(false)}
+          />
         </Pressable>
 
       {/* Search */}
