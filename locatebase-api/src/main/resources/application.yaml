@@ -4,3 +4,9 @@ spring:
   mongodb:
     uri: ${MONGODB_URI}
     database: locatebase
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://securetoken.google.com/locatebase-614b5
+          jwk-set-uri: https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com
