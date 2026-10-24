@@ -1,4 +1,4 @@
-import type { DashboardData } from "../types";
+import type { DashboardData } from "./types";
 
 // Fixed values (no Math.random) so the UI doesn't change on every refresh.
 const dailyViews = [112, 98, 130, 145, 120, 160, 175, 150, 138, 190, 205, 180, 168, 220];

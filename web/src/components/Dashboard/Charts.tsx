@@ -3,7 +3,7 @@ import {
   Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart,
   Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
-import type { DashboardData } from "../types";
+import type { DashboardData } from "../../services/w3/types";
 
 const tick = { fill: "var(--w3-muted)", fontSize: 12 };
 const tooltipStyle = {

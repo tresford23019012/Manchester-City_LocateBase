@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import type { DashboardStats } from "../types";
+import type { DashboardStats } from "../../services/w3/types";
 
 export function StatCards({ stats }: { stats: DashboardStats }) {
   const { totalGuesthouses, topCity, highestRated } = stats;

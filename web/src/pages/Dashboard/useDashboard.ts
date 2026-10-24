@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getDashboard } from "../api/w3Api";
-import type { DashboardData } from "../types";
+import { getDashboard } from "../../services/w3/w3Api";
+import type { DashboardData } from "../../services/w3/types";
 
 /**
  * Loads dashboard data.

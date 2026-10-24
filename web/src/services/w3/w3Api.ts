@@ -1,5 +1,5 @@
-import type { DashboardData } from "../types";
-import { emptyDashboard, mockDashboard } from "../mock/mockData";
+import type { DashboardData } from "./types";
+import { emptyDashboard, mockDashboard } from "./mockData";
 
 // Mock mode is on unless you set VITE_USE_MOCK=false in .env.
 // (VITE_ variables are public in the browser bundle. Never put secrets here.)

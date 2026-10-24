@@ -1,7 +1,7 @@
-import { Charts, ChartsSkeleton } from "../../components/dashboard/Charts";
-import { StatCards, StatCardsSkeleton } from "../../components/dashboard/StatCards";
+import { Charts, ChartsSkeleton } from "../../components/Dashboard/Charts";
+import { StatCards, StatCardsSkeleton } from "../../components/Dashboard/StatCards";
 import { useDashboard } from "./useDashboard";
-import "./dashboard.css";
+import "./Dashboard.css";
 
 export default function DashboardPage() {
   // Pass a number of milliseconds to refresh quietly, e.g. useDashboard(30000).
