@@ -24,17 +24,19 @@ public class Guesthouse {
     private GeoJsonPoint location;        // longitude first, then latitude
     private double pricePerNight;         // in pula
 
-    private List<String> amenities = new ArrayList<>();
-    private List<String> images = new ArrayList<>();   // photo links, max 7, staff-managed
+   private List<String> amenities = new ArrayList<>();   // lowercase, e.g. "wifi", "parking"
+    private List<Photo> photos = new ArrayList<>();       // maximum 7, managed by admins
+    private Contact contact = new Contact();
 
-    private String contactPhone;
-    private String contactEmail;
-    private String ownerId;
-
+    private String ownerId;                 // Firebase uid of the owner (never shown publicly)
     private GuesthouseStatus status = GuesthouseStatus.DRAFT;
 
-    private double averageRating;
+    private double ratingAverage;           // 0 when there are no ratings
     private int ratingCount;
+    private long viewCount;                 // feeds the dashboard charts (never shown publicly)
+
+    private Promotion promotion;            // null when there is none
 
     private Instant createdAt = Instant.now();
-}
+    private Instant updatedAt = Instant.now();
+} 

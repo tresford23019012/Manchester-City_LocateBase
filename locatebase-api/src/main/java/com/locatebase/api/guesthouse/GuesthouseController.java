@@ -19,16 +19,16 @@ public class GuesthouseController {
 
     @GetMapping
     public PageResponse<GuesthouseResponse> list(
-            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) String city,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(required = false) Double minRating,
+            @RequestParam(required = false) String amenities,
             @RequestParam(required = false) String sort,
-            @RequestParam(required = false) String order,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        return service.search(q, city, minPrice, maxPrice, minRating, sort, order, page, size);
+            @RequestParam(defaultValue = "10") int size) {
+        return service.search(search, city, minPrice, maxPrice, minRating, amenities, sort, page, size);
     }
 
     @GetMapping("/{id}")
