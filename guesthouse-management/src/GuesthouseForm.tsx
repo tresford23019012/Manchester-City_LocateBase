@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { uploadPhoto } from "./cloudinary";
 import "./GuesthouseForm.css";
@@ -22,6 +22,7 @@ export type Guesthouse = {
   amenities?: string[];
   latitude?: number;
   longitude?: number;
+  averageRating?: number;
 };
 
 type GuesthouseFormProps = {
@@ -43,12 +44,17 @@ const AMENITIES = [
   "Wheelchair access",
 ];
 
+const STATUSES: GuesthouseStatus[] = [
+  "published",
+  "draft",
+  "suspended",
+];
+
 function GuesthouseForm({
   initialGuesthouse,
   onSave,
   onClose,
 }: GuesthouseFormProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const uploadBusyRef = useRef(false);
 
   const [name, setName] = useState(
@@ -83,7 +89,6 @@ function GuesthouseForm({
   const [amenities, setAmenities] = useState<string[]>(
     initialGuesthouse?.amenities ?? [],
   );
-
   const [latitude, setLatitude] = useState(
     initialGuesthouse?.latitude !== undefined
       ? String(initialGuesthouse.latitude)
@@ -95,32 +100,22 @@ function GuesthouseForm({
       : "",
   );
 
-  const [error, setError] = useState("");
+  const [activePhoto, setActivePhoto] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
+  const [error, setError] = useState("");
 
   const isEditing = Boolean(initialGuesthouse);
 
-  // Preserve any existing amenities received from the backend.
   const availableAmenities = [
     ...new Set([...AMENITIES, ...amenities]),
   ];
 
-  useEffect(() => {
-    const previousElement =
-      document.activeElement as HTMLElement | null;
-
-    const dialog = dialogRef.current;
-
-    if (dialog && !dialog.open) {
-      dialog.showModal();
-    }
-
-    return () => {
-      dialog?.close();
-      previousElement?.focus();
-    };
-  }, []);
+  const currentPhoto = Math.min(
+    activePhoto,
+    Math.max(0, images.length - 1),
+  );
 
   function toggleAmenity(amenity: string) {
     setAmenities((previous) =>
@@ -137,6 +132,7 @@ function GuesthouseForm({
 
     setError("");
     setUploadMessage("");
+    setDragging(false);
 
     if (images.length + files.length > MAX_PHOTOS) {
       setError(
@@ -201,6 +197,7 @@ function GuesthouseForm({
       previous.filter((_, photoIndex) => photoIndex !== index),
     );
 
+    setActivePhoto(0);
     setError("");
     setUploadMessage("");
   }
@@ -234,8 +231,7 @@ function GuesthouseForm({
     if (
       latitude.trim() === "" ||
       !Number.isFinite(latitudeNumber) ||
-      latitudeNumber < -90 ||
-      latitudeNumber > 90
+      Math.abs(latitudeNumber) > 90
     ) {
       setError("Enter a latitude between -90 and 90.");
       return;
@@ -244,8 +240,7 @@ function GuesthouseForm({
     if (
       longitude.trim() === "" ||
       !Number.isFinite(longitudeNumber) ||
-      longitudeNumber < -180 ||
-      longitudeNumber > 180
+      Math.abs(longitudeNumber) > 180
     ) {
       setError("Enter a longitude between -180 and 180.");
       return;
@@ -271,6 +266,7 @@ function GuesthouseForm({
 
     try {
       onSave({
+        ...initialGuesthouse,
         id: initialGuesthouse?.id ?? crypto.randomUUID(),
         name: name.trim(),
         city: city.trim(),
@@ -295,34 +291,20 @@ function GuesthouseForm({
   }
 
   return (
-    <dialog
-      ref={dialogRef}
-      className="guesthouse-dialog"
+    <section
+      className="guesthouse-editor"
       aria-labelledby="form-title"
-      onCancel={(event) => {
-        event.preventDefault();
-
-        if (!uploadBusyRef.current) {
-          onClose();
-        }
-      }}
     >
-      <div className="form-heading">
-        <div>
-          <h2 id="form-title">
-            {isEditing ? "Edit guesthouse" : "Add guesthouse"}
-          </h2>
-          <p>Fields marked * are required.</p>
-        </div>
+      <div className="editor-heading">
+        <h1 id="form-title">
+          {isEditing ? "Edit guesthouse" : "Add guesthouse"}
+        </h1>
 
-        <button
-          type="button"
-          aria-label="Close form"
-          onClick={onClose}
-          disabled={uploading}
-        >
-          ×
-        </button>
+        <p className="subtitle">
+          {isEditing
+            ? "Update the property details."
+            : "Create a new property listing for your portfolio."}
+        </p>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -336,254 +318,338 @@ function GuesthouseForm({
           className="guesthouse-fields"
           disabled={uploading}
         >
-          <div className="guesthouse-form-grid">
-            <label>
-              Guesthouse name *
-              <input
-                required
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-              />
-            </label>
+          <div className="editor-columns">
+            <div className="editor-left">
+              <section className="editor-card">
+                <h2>Basic information</h2>
 
-            <label>
-              City *
-              <input
-                required
-                value={city}
-                onChange={(event) => setCity(event.target.value)}
-              />
-            </label>
+                <div className="guesthouse-form-grid">
+                  <label className="full-width">
+                    Guesthouse name *
+                    <input
+                      required
+                      value={name}
+                      placeholder="e.g. Acacia Rest Guesthouse"
+                      onChange={(event) =>
+                        setName(event.target.value)
+                      }
+                    />
+                  </label>
 
-            <label className="full-width">
-              Description *
-              <textarea
-                required
-                rows={4}
-                value={description}
-                onChange={(event) =>
-                  setDescription(event.target.value)
-                }
-              />
-            </label>
+                  <label className="full-width">
+                    Description *
+                    <textarea
+                      required
+                      rows={3}
+                      value={description}
+                      placeholder="Tell guests what makes this place special"
+                      onChange={(event) =>
+                        setDescription(event.target.value)
+                      }
+                    />
+                  </label>
 
-            <label className="full-width">
-              Address
-              <input
-                value={address}
-                onChange={(event) =>
-                  setAddress(event.target.value)
-                }
-              />
-            </label>
+                  <label>
+                    City *
+                    <input
+                      required
+                      value={city}
+                      placeholder="City"
+                      onChange={(event) =>
+                        setCity(event.target.value)
+                      }
+                    />
+                  </label>
 
-            <label>
-              Price per night (P) *
-              <input
-                required
-                type="number"
-                min="0.01"
-                step="0.01"
-                value={price}
-                onChange={(event) => setPrice(event.target.value)}
-              />
-            </label>
+                  <label>
+                    Country
+                    <input value="Botswana" readOnly />
+                  </label>
 
-            <label>
-              Status
-              <select
-                value={status}
-                onChange={(event) =>
-                  setStatus(
-                    event.target.value as GuesthouseStatus,
-                  )
-                }
-              >
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="suspended">Suspended</option>
-              </select>
-            </label>
+                  <label className="full-width">
+                    Address
+                    <input
+                      value={address}
+                      placeholder="Street address"
+                      onChange={(event) =>
+                        setAddress(event.target.value)
+                      }
+                    />
+                  </label>
 
-            <label>
-              Contact phone *
-              <input
-                required
-                type="tel"
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
-                placeholder="+267 71 000 000"
-              />
-            </label>
+                  <label>
+                    Contact phone *
+                    <input
+                      required
+                      type="tel"
+                      value={phone}
+                      placeholder="+267 71 000 000"
+                      onChange={(event) =>
+                        setPhone(event.target.value)
+                      }
+                    />
+                  </label>
 
-            <label>
-              Contact email
-              <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-            </label>
+                  <label>
+                    Contact email
+                    <input
+                      type="email"
+                      value={email}
+                      placeholder="guesthouse@example.com"
+                      onChange={(event) =>
+                        setEmail(event.target.value)
+                      }
+                    />
+                  </label>
+                </div>
+              </section>
 
-            <label>
-              Latitude *
-              <input
-                required
-                type="number"
-                min="-90"
-                max="90"
-                step="any"
-                placeholder="For example, -24.65"
-                value={latitude}
-                onChange={(event) =>
-                  setLatitude(event.target.value)
-                }
-              />
-            </label>
+              <section className="editor-card">
+                <h2>Pricing & location</h2>
 
-            <label>
-              Longitude *
-              <input
-                required
-                type="number"
-                min="-180"
-                max="180"
-                step="any"
-                placeholder="For example, 25.91"
-                value={longitude}
-                onChange={(event) =>
-                  setLongitude(event.target.value)
-                }
-              />
-            </label>
-          </div>
+                <div className="guesthouse-form-grid">
+                  <label className="full-width">
+                    Nightly rate (P) *
+                    <input
+                      required
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      value={price}
+                      placeholder="0.00"
+                      onChange={(event) =>
+                        setPrice(event.target.value)
+                      }
+                    />
+                  </label>
 
-          <p className="photo-help">
-            Enter the guesthouse’s actual coordinates. The values
-            shown as examples are for testing only.
-          </p>
+                  <label>
+                    Latitude *
+                    <input
+                      required
+                      type="number"
+                      min="-90"
+                      max="90"
+                      step="any"
+                      value={latitude}
+                      onChange={(event) =>
+                        setLatitude(event.target.value)
+                      }
+                    />
+                  </label>
 
-          <fieldset
-            style={{
-              margin: "24px 0",
-              padding: "16px",
-              border: "1px solid var(--border)",
-              borderRadius: "8px",
-            }}
-          >
-            <legend>Amenities</legend>
+                  <label>
+                    Longitude *
+                    <input
+                      required
+                      type="number"
+                      min="-180"
+                      max="180"
+                      step="any"
+                      value={longitude}
+                      onChange={(event) =>
+                        setLongitude(event.target.value)
+                      }
+                    />
+                  </label>
+                </div>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns:
-                  "repeat(auto-fit, minmax(160px, 1fr))",
-                gap: "14px",
-              }}
-            >
-              {availableAmenities.map((amenity) => (
+                <p className="photo-help">
+                  Enter the guesthouse’s actual coordinates.
+                </p>
+              </section>
+
+              <section className="editor-card">
+                <h2>Amenities</h2>
+
+                <div className="amenities-grid">
+                  {availableAmenities.map((amenity) => (
+                    <label key={amenity}>
+                      <input
+                        type="checkbox"
+                        checked={amenities.includes(amenity)}
+                        onChange={() => toggleAmenity(amenity)}
+                      />
+                      {amenity}
+                    </label>
+                  ))}
+                </div>
+              </section>
+            </div>
+
+            <div className="editor-right">
+              <section className="editor-card">
+                <div className="photo-heading">
+                  <h2>Photos</h2>
+                  <span>
+                    {images.length} / {MAX_PHOTOS}
+                  </span>
+                </div>
+
                 <label
-                  key={amenity}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    fontSize: "14px",
+                  className={`photo-upload ${
+                    dragging ? "is-dragging" : ""
+                  }`}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+
+                    if (!uploading) {
+                      setDragging(true);
+                    }
+                  }}
+                  onDragLeave={() => setDragging(false)}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    setDragging(false);
+
+                    if (!uploading) {
+                      void handlePhotos(
+                        Array.from(event.dataTransfer.files),
+                      );
+                    }
                   }}
                 >
+                  <span className="upload-icon" aria-hidden="true">
+                    ▧
+                  </span>
+
+                  <strong>Drop photos here</strong>
+                  <span>or choose files</span>
+                  <small>JPEG, PNG, WebP · up to 5 MB</small>
+
                   <input
-                    type="checkbox"
-                    checked={amenities.includes(amenity)}
-                    onChange={() => toggleAmenity(amenity)}
-                    style={{
-                      width: "17px",
-                      height: "17px",
-                      accentColor: "var(--primary)",
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    aria-label="Choose guesthouse photos"
+                    disabled={images.length >= MAX_PHOTOS}
+                    onChange={(event) => {
+                      const files = Array.from(
+                        event.target.files ?? [],
+                      );
+
+                      event.target.value = "";
+                      void handlePhotos(files);
                     }}
                   />
-                  {amenity}
                 </label>
-              ))}
-            </div>
-          </fieldset>
 
-          <section
-            className="photo-section"
-            aria-labelledby="photos-heading"
-          >
-            <div className="photo-heading">
-              <h3 id="photos-heading">Guesthouse photos</h3>
-              <span>{images.length} / {MAX_PHOTOS}</span>
-            </div>
+                <p className="photo-help" role="status">
+                  {uploadMessage}
+                </p>
 
-            <p className="photo-help">
-              JPEG, PNG or WebP. Maximum 5 MB per photo.
-            </p>
-
-            <p className="photo-demo-notice">
-              New photos upload to Cloudinary. Click Save to
-              attach their links to this guesthouse.
-            </p>
-
-            <label className="photo-upload">
-              <span>Choose photos</span>
-
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                multiple
-                disabled={images.length >= MAX_PHOTOS}
-                onChange={(event) => {
-                  const files = Array.from(
-                    event.target.files ?? [],
-                  );
-
-                  event.target.value = "";
-                  void handlePhotos(files);
-                }}
-              />
-            </label>
-
-            {images.length === 0 ? (
-              <p className="no-photos">
-                No photos uploaded yet.
-              </p>
-            ) : (
-              <div className="photo-grid">
-                {images.map((image, index) => (
-                  <div className="photo-card" key={index}>
+                {images.length > 0 && (
+                  <div
+                    className="photo-carousel"
+                    aria-label="Guesthouse photo gallery"
+                  >
                     <img
-                      src={image}
-                      alt={`Guesthouse photo ${index + 1}`}
+                      src={images[currentPhoto]}
+                      alt={`Guesthouse photo ${currentPhoto + 1}`}
                     />
 
-                    <div className="photo-card-footer">
-                      <span>Photo {index + 1}</span>
+                    {images.length > 1 && (
+                      <div className="carousel-controls">
+                        <button
+                          type="button"
+                          aria-label="Previous photo"
+                          onClick={() =>
+                            setActivePhoto(
+                              (currentPhoto - 1 + images.length) %
+                                images.length,
+                            )
+                          }
+                        >
+                          ‹
+                        </button>
+
+                        <span aria-live="polite">
+                          {currentPhoto + 1} / {images.length}
+                        </span>
+
+                        <button
+                          type="button"
+                          aria-label="Next photo"
+                          onClick={() =>
+                            setActivePhoto(
+                              (currentPhoto + 1) % images.length,
+                            )
+                          }
+                        >
+                          ›
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="photo-grid">
+                  {images.map((image, index) => (
+                    <div className="photo-card" key={index}>
+                      <button
+                        type="button"
+                        className="photo-thumbnail"
+                        aria-label={`View photo ${index + 1}`}
+                        aria-pressed={currentPhoto === index}
+                        onClick={() => setActivePhoto(index)}
+                      >
+                        <img
+                          src={image}
+                          alt={`Guesthouse photo ${index + 1}`}
+                        />
+                      </button>
 
                       <button
                         type="button"
-                        onClick={() => removePhoto(index)}
+                        className="remove-photo"
                         aria-label={`Remove photo ${index + 1}`}
+                        onClick={() => removePhoto(index)}
                       >
                         Remove
                       </button>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        </fieldset>
+                  ))}
+                </div>
+              </section>
 
-        <p className="photo-help" role="status">
-          {uploadMessage}
-        </p>
+              <section className="editor-card">
+                <h2>Publishing</h2>
+
+                <p className="photo-help">
+                  Choose whether this guesthouse is visible in
+                  the marketplace.
+                </p>
+
+                <div
+                  className="publishing-options"
+                  role="group"
+                  aria-label="Listing status"
+                >
+                  {STATUSES.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      className={
+                        status === option ? "olive-button" : ""
+                      }
+                      aria-pressed={status === option}
+                      onClick={() => setStatus(option)}
+                    >
+                      {option.charAt(0).toUpperCase() +
+                        option.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </section>
+            </div>
+          </div>
+        </fieldset>
 
         <div className="form-actions">
           <button
             type="button"
-            onClick={onClose}
             disabled={uploading}
+            onClick={onClose}
           >
             Cancel
           </button>
@@ -597,11 +663,11 @@ function GuesthouseForm({
               ? "Uploading photos…"
               : isEditing
                 ? "Save changes"
-                : "Save guesthouse"}
+                : "Create guesthouse"}
           </button>
         </div>
       </form>
-    </dialog>
+    </section>
   );
 }
 
