@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef } from "react";
+import { usePathname, router } from "expo-router";
 import { View, Image, Text, Pressable, StyleSheet, Modal, } from "react-native";
 
 
@@ -12,6 +13,9 @@ export default function SideMenu({
   visible,
   onClose,
 }: SideMenuProps) {
+
+const pathname = usePathname();
+
 return (
   <Modal
     visible={visible}
@@ -58,7 +62,33 @@ return (
           </Pressable>
         </View>
 
-        {/* We'll add the Favourites item here next */}
+        <View style={styles.homeButton}>
+            <Pressable
+                style={[styles.homeRow,
+                       pathname === "/" && styles.activeMenuItem,]
+                }
+                onPress={() => router.push("/")}>
+                
+       
+             <View style={styles.homeIcon}>
+                <Ionicons
+                 name="home"
+                 size={23}
+                 color={pathname === "/" ? "#FFFFFF" : "#000000"}
+                 
+                 />
+            </View>
+               <Text style={[styles.homeName,
+                pathname === "/" && styles.activeMenuText,]}>Home</Text>
+
+                <Ionicons
+                name="chevron-forward"
+                size={23}
+                color={pathname === "/" ? "#FFFFFF" : "#000000"}
+                style={styles.homeArrow}
+                />
+            </Pressable>
+        </View>
       </View>
     </View>
   </Modal>
@@ -67,11 +97,22 @@ return (
 
 
 const styles = StyleSheet.create({
+menuPanel: {
+  width: "82%",
+  maxWidth: 340,
+  backgroundColor: "#F8F5F0",
+  position: "absolute",
+  left: 0,
+  top: 0,
+  bottom: 0,
+  borderTopRightRadius: 28,
+  borderBottomRightRadius: 28,
+},
+
 profileHeader: {
-  backgroundColor: "#54200F",
+  backgroundColor: "#5E6521",
   paddingHorizontal: 18,
   paddingVertical: 28,
-  borderTopLeftRadius: 26,
   borderTopRightRadius: 26,
   borderBottomRightRadius: 28,
 },
@@ -86,7 +127,7 @@ avatar: {
   width: 54,
   height: 54,
   borderRadius: 27,
-  backgroundColor: "#803719",
+  backgroundColor: "#32360b",
   alignItems: "center",
   justifyContent: "center",
 },
@@ -117,15 +158,38 @@ backdrop: {
   flex: 1,
 },
 
-menuPanel: {
-  width: "82%",
-  maxWidth: 340,
-  backgroundColor: "#F8F5F0",
-  paddingTop: 55,
-  position: "absolute",
-  left: 0,
-  top: 0,
-  bottom: 0,
+homeButton: {
+    paddingVertical: 28,
+    paddingHorizontal: 18,
 },
 
+homeRow: {
+ flexDirection: "row",
+ alignItems: "center",
+ paddingVertical: 14,
+ paddingHorizontal: 25,
+ borderRadius: 34,
+ 
+ gap: 12,
+ height: 65,
+},
+
+homeName: {
+  flex: 1,
+  fontSize: 15,
+  fontWeight: "600",
+  color: "#000000",
+},
+
+homeArrow: {
+  marginLeft: "auto",
+},
+
+activeMenuText: {
+  color: "#FFFFFF",
+}, 
+
+activeMenuItem: {
+ backgroundColor: "#9AA04E",
+}
 })

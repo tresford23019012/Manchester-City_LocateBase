@@ -142,7 +142,7 @@ export default function Home() {
         <Pressable
           style={styles.detailsButton}
           onPress={() => {
-            // We'll connect this to the hotel details page later.
+            //hotel details page.
           }}
         >
           <Text style={styles.detailsText}>View details →</Text>
