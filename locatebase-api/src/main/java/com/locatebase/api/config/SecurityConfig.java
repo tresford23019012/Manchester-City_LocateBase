@@ -19,6 +19,12 @@ import java.time.Instant;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final FirebaseJwtConverter jwtConverter;
+
+    public SecurityConfig(FirebaseJwtConverter jwtConverter) {
+        this.jwtConverter = jwtConverter;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
@@ -35,32 +41,37 @@ public class SecurityConfig {
                         request.getRequestURI());
 
         http
-                // use the CORS rules from CorsConfig
                 .cors(Customizer.withDefaults())
-
-                // CSRF protection is for cookie sessions; our API uses tokens instead
                 .csrf(csrf -> csrf.disable())
-
-                // no server-side sessions: every request carries its own token
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth
-                        // public: health check, browsing, ratings lists and filter lists (all GET only)
+                        // public: health check, browsing, ratings lists and filter lists (GET only)
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/health",
                                 "/api/v1/meta/**",
                                 "/api/v1/guesthouses",
                                 "/api/v1/guesthouses/**").permitAll()
-                        // everything else needs a valid login token
-                        .anyRequest().authenticated())
+
+                        // any logged-in person, even a brand-new or blocked one, may sync and see their own profile
+                        .requestMatchers("/api/v1/auth/sync", "/api/v1/me").authenticated()
+
+                        // staff only
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+
+                        // owners (admins count as owners too)
+                        .requestMatchers("/api/v1/owner/**").hasRole("OWNER")
+
+                        // everything else (ratings, favourites, contact admin) needs at least a customer
+                        .anyRequest().hasRole("CUSTOMER"))
 
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint(unauthorized)
                         .accessDeniedHandler(forbidden))
 
-                // read and verify the "Authorization: Bearer <token>" header using the Firebase settings
+                // verify the Firebase token, then turn the user's stored role into permissions
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(Customizer.withDefaults())
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtConverter))
                         .authenticationEntryPoint(unauthorized)
                         .accessDeniedHandler(forbidden));
 
