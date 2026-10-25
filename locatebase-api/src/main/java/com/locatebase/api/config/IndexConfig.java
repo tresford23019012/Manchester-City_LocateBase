@@ -26,5 +26,13 @@ public class IndexConfig implements ApplicationRunner {
         // lets MongoDB answer "which guesthouses are near this point" quickly
         mongo.getCollection("guesthouses")
                 .createIndex(new Document("location", "2dsphere"));
+
+        // one rating per user per guesthouse
+        mongo.getCollection("ratings")
+                .createIndex(new Document("guesthouseId", 1).append("userId", 1), new IndexOptions().unique(true));
+
+        // one favourite entry per user per guesthouse
+        mongo.getCollection("favourites")
+                .createIndex(new Document("userId", 1).append("guesthouseId", 1), new IndexOptions().unique(true));
     }
 }

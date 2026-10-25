@@ -26,9 +26,22 @@ public class GuesthouseController {
             @RequestParam(required = false) Double minRating,
             @RequestParam(required = false) String amenities,
             @RequestParam(required = false) String sort,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return service.search(search, city, minPrice, maxPrice, minRating, amenities, sort, page, size);
+        return service.search(search, city, minPrice, maxPrice, minRating, amenities, sort, lat, lng, page, size);
+    }
+
+    // Must stay above /{id}, so "nearby" is not mistaken for a guesthouse id
+    @GetMapping("/nearby")
+    public PageResponse<GuesthouseResponse> nearby(
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng,
+            @RequestParam(required = false) Double radiusKm,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return service.nearby(lat, lng, radiusKm, page, size);
     }
 
     @GetMapping("/{id}")
