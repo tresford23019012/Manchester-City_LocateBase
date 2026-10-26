@@ -6,4 +6,6 @@ import java.util.Optional;
 
 public interface AppUserRepository extends MongoRepository<AppUser, String> {
     Optional<AppUser> findByFirebaseUid(String firebaseUid);
+
+    Optional<AppUser> findByEmailIgnoreCase(String email);
 }
