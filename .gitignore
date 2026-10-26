@@ -1,0 +1,14 @@
+**/node_modules/
+**/dist/
+**/build/
+**/target/
+**/.expo/
+**/.env
+**/.env.local
+**/google-services.json
+**/GoogleService-Info.plist
+**/*.jks
+**/*.keystore
+.DS_Store
+
+/Manchester-City_LocateBase/
