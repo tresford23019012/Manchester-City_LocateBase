@@ -67,13 +67,12 @@ return (
                 style={[styles.homeRow,
                        pathname === "/" && styles.activeMenuItem,]
                 }
-                onPress={() => router.push("/")}>
-                
+                onPress={() => router.push("/")}>              
        
              <View style={styles.homeIcon}>
                 <Ionicons
-                 name="home"
-                 size={23}
+                 name={pathname === "/" ? "home": "home-outline"}
+                 size={34}
                  color={pathname === "/" ? "#FFFFFF" : "#000000"}
                  
                  />
@@ -85,6 +84,34 @@ return (
                 name="chevron-forward"
                 size={23}
                 color={pathname === "/" ? "#FFFFFF" : "#000000"}
+                style={styles.homeArrow}
+                />
+            </Pressable>
+        </View>
+
+        <View style={styles.favouriteButton}>
+            <Pressable
+                style={[styles.homeRow,
+                       pathname === "/favourite" && styles.activeMenuItem,]
+                }
+                onPress={() => router.push("/")}>
+                
+       
+             <View style={styles.favouriteIcon}>
+                <Ionicons
+                 name={pathname === "/favourite" ? "heart": "heart-outline"}
+                 size={35}
+                 color={pathname === "/favourite" ? "#FFFFFF" : "#000000"}
+                 
+                 />
+            </View>
+               <Text style={[styles.homeName,
+                pathname === "/favourite" && styles.activeMenuText,]}>Favourite</Text>
+
+                <Ionicons
+                name="chevron-forward"
+                size={23}
+                color={pathname === "/favourite" ? "#FFFFFF" : "#000000"}
                 style={styles.homeArrow}
                 />
             </Pressable>
@@ -163,6 +190,10 @@ homeButton: {
     paddingHorizontal: 18,
 },
 
+favouriteButton: {
+  paddingHorizontal: 18,
+},
+
 homeRow: {
  flexDirection: "row",
  alignItems: "center",
@@ -176,7 +207,7 @@ homeRow: {
 
 homeName: {
   flex: 1,
-  fontSize: 15,
+  fontSize: 17,
   fontWeight: "600",
   color: "#000000",
 },
