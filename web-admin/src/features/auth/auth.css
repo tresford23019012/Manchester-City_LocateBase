@@ -1,0 +1,84 @@
+.auth { display: grid; grid-template-columns: 5fr 6fr; min-height: 100vh; }
+
+.auth-brand {
+  background: var(--sidebar);
+  color: var(--on-primary);
+  padding: 48px 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 32px;
+}
+.auth-logo { font-family: Georgia, serif; font-size: 1.4rem; font-weight: 700; }
+.auth-copy { display: flex; flex-direction: column; gap: 14px; }
+.auth-eyebrow { text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem; margin: 0; opacity: 0.85; }
+.auth-brand h1 { color: inherit; font-size: 2.8rem; line-height: 1.08; margin: 0; max-width: 460px; }
+.auth-sub { max-width: 380px; margin: 0; opacity: 0.88; }
+
+.auth-hero {
+  width: 100%;
+  max-width: 480px;
+  height: 230px;
+  object-fit: cover;
+  border-radius: 20px;
+  display: block;
+}
+
+.auth-main {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--background);
+}
+.auth-toggle { position: absolute; top: 20px; right: 20px; }
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 0 0 1px var(--primary), 0 12px 40px color-mix(in srgb, var(--primary) 25%, transparent);
+}
+.auth-card h2 { margin: 0 0 4px; font-size: 1.6rem; }
+.auth-card .hint { color: var(--text-secondary); margin: 0 0 20px; font-size: 0.9rem; }
+
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.field label { font-size: 0.85rem; font-weight: 600; }
+.field input {
+  padding: 11px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+.field input::placeholder { color: var(--text-secondary); }
+.field input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+
+.btn {
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.btn:hover { background: var(--primary-dark); }
+.btn:disabled { opacity: 0.6; cursor: wait; }
+
+.error { color: var(--danger); font-size: 0.85rem; margin: 0 0 10px; }
+.switch { text-align: center; font-size: 0.9rem; color: var(--text-secondary); margin: 18px 0 0; }
+
+@media (max-width: 800px) {
+  .auth { grid-template-columns: 1fr; }
+  .auth-brand { padding: 32px; }
+  .auth-brand h1 { font-size: 1.9rem; }
+  .auth-hero { height: 160px; }
+}
