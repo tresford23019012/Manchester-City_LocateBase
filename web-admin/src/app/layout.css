@@ -1,0 +1,63 @@
+.shell { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+
+.sidebar {
+  background: var(--sidebar);
+  color: var(--on-primary);
+  padding: 28px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+.sidebar-logo { font-family: Georgia, serif; font-size: 1.3rem; font-weight: 700; padding: 0 12px; }
+
+.sidebar-nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+.sidebar-link:hover { background: rgba(255, 255, 255, 0.12); opacity: 1; }
+.sidebar-link.active { background: rgba(255, 255, 255, 0.22); opacity: 1; }
+
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--primary-tint); color: var(--primary-dark);
+  display: grid; place-items: center; font-weight: 700; font-size: 0.8rem;
+}
+.sidebar-user-text { flex: 1; line-height: 1.2; }
+.sidebar-user-name { font-weight: 700; font-size: 0.9rem; }
+.sidebar-user-role { font-size: 0.75rem; opacity: 0.8; }
+.logout-btn {
+  background: transparent; border: 1px solid rgba(255, 255, 255, 0.4);
+  color: inherit; border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 0.8rem;
+}
+.logout-btn:hover { background: rgba(255, 255, 255, 0.15); }
+
+.content { display: flex; flex-direction: column; min-width: 0; }
+.topbar { display: flex; justify-content: flex-end; padding: 16px 32px; }
+.page { padding: 0 32px 32px; flex: 1; }
+
+@media (max-width: 800px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { position: static; height: auto; flex-direction: column; padding: 16px; }
+  .sidebar-nav { flex-direction: row; flex-wrap: wrap; }
+  .topbar, .page { padding-left: 16px; padding-right: 16px; }
+}
