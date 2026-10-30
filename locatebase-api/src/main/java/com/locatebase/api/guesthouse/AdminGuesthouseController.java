@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -54,5 +55,16 @@ public class AdminGuesthouseController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable String id) {
         service.delete(id);
+    }
+
+    @PatchMapping("/{id}/status")
+    public GuesthouseResponse updateStatus(@PathVariable String id,
+                                           @Valid @RequestBody GuesthouseStatusRequest body) {
+        return service.updateStatus(id, body.status());
+    }
+
+    @PostMapping("/bulk-status")
+    public BulkStatusResponse bulkStatus(@Valid @RequestBody BulkStatusRequest body) {
+        return service.bulkStatus(body.ids(), body.status());
     }
 }

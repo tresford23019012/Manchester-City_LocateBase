@@ -102,6 +102,44 @@ public class AdminGuesthouseService {
         mongo.remove(Query.query(Criteria.where("guesthouseId").is(id)), "favourites");
     }
 
+    // ---------- status ----------
+
+    public GuesthouseResponse updateStatus(String id, String status) {
+        Guesthouse g = find(id);
+        applyStatus(g, parseStatus(status));
+        return GuesthouseResponse.from(g);
+    }
+
+    // Changes many at once. Ones that cannot be changed are reported, and the rest still go through.
+    public BulkStatusResponse bulkStatus(List<String> ids, String status) {
+        GuesthouseStatus target = parseStatus(status);   // a bad status rejects the whole request
+
+        int updated = 0;
+        List<BulkStatusResponse.Failure> failed = new ArrayList<>();
+        for (String id : new LinkedHashSet<>(ids)) {      // duplicates in the list count once
+            try {
+                Guesthouse g = find(id);
+                if (applyStatus(g, target)) {
+                    updated++;
+                }
+            } catch (NotFoundException e) {
+                failed.add(new BulkStatusResponse.Failure(id, e.getMessage()));
+            }
+        }
+        return new BulkStatusResponse(updated, failed);
+    }
+
+    // Returns true when the status really changed. A listing already in that status is left alone.
+    private boolean applyStatus(Guesthouse g, GuesthouseStatus target) {
+        if (g.getStatus() == target) {
+            return false;
+        }
+        g.setStatus(target);
+        g.setUpdatedAt(Instant.now());
+        repository.save(g);
+        return true;
+    }
+
     // ---------- helpers ----------
 
     private Guesthouse find(String id) {
