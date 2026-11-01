@@ -10,3 +10,6 @@ spring:
         jwt:
           issuer-uri: https://securetoken.google.com/locatebase-614b5
           jwk-set-uri: https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com
+
+spring.servlet.multipart.max-file-size: 8MB
+spring.servlet.multipart.max-request-size: 40MB
