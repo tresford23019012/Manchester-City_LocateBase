@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "527973088611",
+    "project_id": "locatebase-88287",
+    "storage_bucket": "locatebase-88287.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:527973088611:android:147e97039f8d90bb84a756",
+        "android_client_info": {
+          "package_name": "com.anonymous.locatebaseapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsIQLAmDX-h_ps7funJPQiewaCYYFnUhw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

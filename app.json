@@ -1,5 +1,10 @@
 {
   "android": {
     "package": "com.anonymous.locatebaseapp"
-  }
+  },
+  "plugins": [
+    "expo-image",
+    "expo-router",
+    "expo-splash-screen"
+  ]
 }

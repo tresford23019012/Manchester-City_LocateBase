@@ -9,15 +9,15 @@ export default function Footer() {
 
   const exploreScale = useRef(new Animated.Value(0.8)).current;
   const mapScale = useRef(new Animated.Value(0.8)).current;
-  const notificationsScale = useRef(new Animated.Value(0.8)).current;
+  const recentScale = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
     const icons = [
       { animation: exploreScale, active: pathname === "/" },
       { animation: mapScale, active: pathname === "/map" },
       {
-        animation: notificationsScale,
-        active: pathname === "/notifications",
+        animation: recentScale,
+        active: pathname === "/recent",
       },
     ];
 
@@ -29,19 +29,19 @@ export default function Footer() {
         tension: 100,
       }).start();
     });
-  }, [pathname, exploreScale, mapScale, notificationsScale]);
+  }, [pathname, exploreScale, mapScale, recentScale]);
 
     const exploreBar = useRef(new Animated.Value(0)).current;
     const mapBar = useRef(new Animated.Value(0)).current;
-    const notificationsBar = useRef(new Animated.Value(0)).current;
+    const recentBar = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
       const bars = [
         { animation: exploreBar, active: pathname === "/" },
         { animation: mapBar, active: pathname === "/map" },
         {
-          animation: notificationsBar,
-          active: pathname === "/notifications",
+          animation: recentBar,
+          active: pathname === "/recent",
         },
       ];
 
@@ -54,7 +54,7 @@ export default function Footer() {
           useNativeDriver: false,
         }).start();
       });
-    }, [pathname, exploreBar, mapBar, notificationsBar]);
+    }, [pathname, exploreBar, mapBar, recentBar]);
 
   return (
     <View style={styles.footerShadow}>
@@ -124,35 +124,35 @@ export default function Footer() {
           </Pressable>
 
           {/*Notification*/}
-          <Pressable style={styles.menuButtons} onPress={() => router.push("/notifications")}>
+          <Pressable style={styles.menuButtons} onPress={() => router.push("/recent")}>
             <Animated.View
-              style={{ transform: [{ scale: notificationsScale }] }} >
+              style={{ transform: [{ scale: recentScale }] }} >
 
             <Ionicons
               name={
-                pathname === "/notifications"
-                  ? "notifications"
-                  : "notifications-outline"
+                pathname === "/recent"
+                  ? "time"
+                  : "time-outline"
               }
               size={28}
-              color={pathname === "/notifications" ? "#54200F" : "#8b341a"}
+              color={pathname === "/recent" ? "#54200F" : "#8b341a"}
             />
             </Animated.View>
 
             <Text
               style={[
                 styles.menuText,
-                pathname === "/notifications" && styles.activeText,
+                pathname === "/recent" && styles.activeText,
               ]}
             >
-              Notifications
+              Recently Viewed
             </Text>
 
-            {pathname === "/notifications"  && 
+            {pathname === "/recent"  && 
             (<Animated.View
                   style={[
                     styles.activeBar,
-                    { width: notificationsBar },
+                    { width: recentBar },
                   ]}
                 /> ) }
 

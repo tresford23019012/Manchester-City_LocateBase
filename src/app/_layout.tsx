@@ -1,5 +1,7 @@
+import { AuthProvider } from "../context/AuthContext";
+import "../../config/firebase";
 
-import { Stack } from "expo-router";
+import { Stack, usePathname } from "expo-router";
 import { View, StyleSheet, Animated } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -14,8 +16,14 @@ import Header from "../components/header";
 
 function AppLayout() {
   const scrollY = useScrollAnimation();
+  const pathname = usePathname();
 
-  // Animate the header upward as the page scrolls down
+  // Authentication screens should not display the main navigation
+  const isAuthScreen =
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/forgot-password";
+
   const headerTranslateY = scrollY.interpolate({
     inputRange: [0, 100],
     outputRange: [0, -150],
@@ -24,19 +32,22 @@ function AppLayout() {
 
   return (
     <View style={styles.container}>
-      {/* Floating animated header */}
-      <Animated.View
-        style={[
-          styles.header,
-          {
-            transform: [{ translateY: headerTranslateY }],
-          },
-        ]}
-      >
-        <Header />
-      </Animated.View>
 
-      {/* App screens */}
+      {!isAuthScreen && (
+        <>
+          <Animated.View
+            style={[
+              styles.header,
+              {
+                transform: [{ translateY: headerTranslateY }],
+              },
+            ]}
+          >
+            <Header />
+          </Animated.View>
+        </>
+      )}
+
       <View style={styles.pages}>
         <Stack
           screenOptions={{
@@ -45,10 +56,12 @@ function AppLayout() {
         />
       </View>
 
-      {/* Floating footer */}
-      <View style={styles.floatingFooter}>
-        <Footer />
-      </View>
+      {!isAuthScreen && (
+        <View style={styles.floatingFooter}>
+          <Footer />
+        </View>
+      )}
+
     </View>
   );
 }
@@ -56,11 +69,13 @@ function AppLayout() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <ScrollProvider>
-          <AppLayout />
-        </ScrollProvider>
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <ScrollProvider>
+            <AppLayout />
+          </ScrollProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }

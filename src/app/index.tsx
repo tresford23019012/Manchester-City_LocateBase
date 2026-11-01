@@ -14,6 +14,8 @@ import {
 import { getGuesthouses, type Guesthouse } from "../app/services/api";
 import { Ionicons } from "@expo/vector-icons";
 import { useScrollAnimation } from "../context/ScrollContext";
+import { useAuth } from "../context/AuthContext";
+import { requireAuth } from "../utils/requireAuth";
 
 
 const categories = ["Recommended", "Popular", "Affordable"] as const;
@@ -37,6 +39,12 @@ export default function Home() {
   const [guesthouses, setGuesthouses] = useState<Guesthouse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated } = useAuth();
+  const handleFavoritePress = (hotelId: string) => {
+  if (!requireAuth(isAuthenticated)) return;
+
+  toggleFavorite(hotelId);
+};
 
   const loadGuesthouses = useCallback(async () => {
     try {
@@ -103,7 +111,7 @@ export default function Home() {
        {renderImage(hotel.image, styles.hotelImage, styles.imagePlaceholder)}
        <Pressable
         style={styles.favoriteButton}
-          onPress={() => toggleFavorite(hotel.id)}
+          onPress={() => handleFavoritePress(hotel.id)}
           accessibilityRole="button"
           accessibilityLabel={
             favorites.includes(hotel.id)
@@ -117,7 +125,7 @@ export default function Home() {
               color={favorites.includes(hotel.id) ? "#F44336" : "#54200F"}
               />
           </Pressable>
-      </View>
+      </View>uns code in response to a component lifecycle or dependency change.
 
       <View style={styles.cardDetails}>
         <Text numberOfLines={1} style={styles.hotelName}>

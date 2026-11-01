@@ -106,12 +106,40 @@ return (
                  />
             </View>
                <Text style={[styles.homeName,
-                pathname === "/favourite" && styles.activeMenuText,]}>Favourite</Text>
+                pathname === "/favourite" && styles.activeMenuText,]}>Favourites</Text>
 
                 <Ionicons
                 name="chevron-forward"
                 size={23}
                 color={pathname === "/favourite" ? "#FFFFFF" : "#000000"}
+                style={styles.homeArrow}
+                />
+            </Pressable>
+        </View>
+
+        <View style={styles.favouriteButton}>
+            <Pressable
+                style={[styles.homeRow,
+                       pathname === "/login" && styles.activeMenuItem,]
+                }
+                onPress={() => router.push("/login")}>
+                
+       
+             <View style={styles.loginIcon}>
+                <Ionicons
+                 name={pathname === "/login" ? "exit": "exit-outline"}
+                 size={35}
+                 color={pathname === "/login" ? "#FFFFFF" : "#000000"}
+                 
+                 />
+            </View>
+               <Text style={[styles.homeName,
+                pathname === "/login" && styles.activeMenuText,]}>Sign In</Text>
+
+                <Ionicons
+                name="chevron-forward"
+                size={23}
+                color={pathname === "/login" ? "#FFFFFF" : "#000000"}
                 style={styles.homeArrow}
                 />
             </Pressable>
