@@ -42,8 +42,13 @@ public record GuesthouseRequest(
         @Valid
         ContactInput contact,
 
+        // optional: the owner's account email; they must already have signed up as an owner
         @Email(message = "Owner email is not valid")
-        String ownerEmail) {
+        String ownerEmail,
+
+        // optional, used on create only: the owner request this listing is created from
+        @Size(max = 60, message = "Request id is too long")
+        String requestId) {
 
     // GeoJSON: coordinates are [longitude, latitude]
     public record LocationInput(

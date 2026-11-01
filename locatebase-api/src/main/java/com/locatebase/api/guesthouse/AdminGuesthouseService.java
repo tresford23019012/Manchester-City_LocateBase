@@ -1,11 +1,15 @@
 package com.locatebase.api.guesthouse;
 
 import com.locatebase.api.common.BadRequestException;
+import com.locatebase.api.common.ConflictException;
 import com.locatebase.api.common.NotFoundException;
 import com.locatebase.api.common.PageResponse;
+import com.locatebase.api.ownerrequest.AdminRequestService;
+import com.locatebase.api.ownerrequest.OwnerRequest;
 import com.locatebase.api.user.AppUser;
 import com.locatebase.api.user.AppUserRepository;
 import com.locatebase.api.user.Role;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -29,11 +33,16 @@ public class AdminGuesthouseService {
     private final GuesthouseRepository repository;
     private final AppUserRepository users;
     private final MongoTemplate mongo;
+    private final AdminRequestService requests;
+    private final ApplicationEventPublisher events;
 
-    public AdminGuesthouseService(GuesthouseRepository repository, AppUserRepository users, MongoTemplate mongo) {
+    public AdminGuesthouseService(GuesthouseRepository repository, AppUserRepository users, MongoTemplate mongo,
+                                  AdminRequestService requests, ApplicationEventPublisher events) {
         this.repository = repository;
         this.users = users;
         this.mongo = mongo;
+        this.requests = requests;
+        this.events = events;
     }
 
     // All guesthouses in every status, newest first
@@ -72,12 +81,21 @@ public class AdminGuesthouseService {
         return GuesthouseResponse.from(find(id));
     }
 
-    // A new guesthouse always starts as a draft with no photos and no ratings
+    // A new guesthouse always starts as a draft. Created from a request, the requester becomes the owner.
     public GuesthouseResponse create(GuesthouseRequest request) {
         Guesthouse g = new Guesthouse();
         apply(g, request);
         g.setStatus(GuesthouseStatus.DRAFT);
-        g.setOwnerId(resolveOwnerId(request.ownerEmail()));
+
+        String ownerId = resolveOwnerId(request.ownerEmail());
+        if (request.requestId() != null && !request.requestId().isBlank()) {
+            OwnerRequest source = requests.requireExisting(request.requestId().trim());
+            g.setRequestId(source.getId());
+            if (ownerId == null) {
+                ownerId = source.getOwnerId();
+            }
+        }
+        g.setOwnerId(ownerId);
         return GuesthouseResponse.from(repository.save(g));
     }
 
@@ -94,12 +112,14 @@ public class AdminGuesthouseService {
         return GuesthouseResponse.from(repository.save(g));
     }
 
-    // Deleting a guesthouse also removes its ratings and everyone's favourites of it
+    // Also removes ratings, favourites and payment records, and announces the delete so photos get cleaned up
     public void delete(String id) {
         Guesthouse g = find(id);
         repository.delete(g);
         mongo.remove(Query.query(Criteria.where("guesthouseId").is(id)), "ratings");
         mongo.remove(Query.query(Criteria.where("guesthouseId").is(id)), "favourites");
+        mongo.remove(Query.query(Criteria.where("guesthouseId").is(id)), "payments");
+        events.publishEvent(new GuesthouseDeleted(g.getId(), g.getPhotos()));
     }
 
     // ---------- status ----------
@@ -110,33 +130,41 @@ public class AdminGuesthouseService {
         return GuesthouseResponse.from(g);
     }
 
-    // Changes many at once. Ones that cannot be changed are reported, and the rest still go through.
     public BulkStatusResponse bulkStatus(List<String> ids, String status) {
         GuesthouseStatus target = parseStatus(status);   // a bad status rejects the whole request
 
         int updated = 0;
         List<BulkStatusResponse.Failure> failed = new ArrayList<>();
-        for (String id : new LinkedHashSet<>(ids)) {      // duplicates in the list count once
+        for (String id : new LinkedHashSet<>(ids)) {      // duplicates count once
             try {
                 Guesthouse g = find(id);
                 if (applyStatus(g, target)) {
                     updated++;
                 }
-            } catch (NotFoundException e) {
+            } catch (NotFoundException | ConflictException e) {
                 failed.add(new BulkStatusResponse.Failure(id, e.getMessage()));
             }
         }
         return new BulkStatusResponse(updated, failed);
     }
 
-    // Returns true when the status really changed. A listing already in that status is left alone.
+    // True when the status really changed. Publishing a listing made from a request needs its data collected,
+    // and publishing closes the request.
     private boolean applyStatus(Guesthouse g, GuesthouseStatus target) {
         if (g.getStatus() == target) {
             return false;
         }
+        String requestId = g.getRequestId();
+        boolean publishing = target == GuesthouseStatus.PUBLISHED && requestId != null;
+        if (publishing) {
+            requests.requireReadyToPublish(requestId);
+        }
         g.setStatus(target);
         g.setUpdatedAt(Instant.now());
         repository.save(g);
+        if (publishing) {
+            requests.markPublished(requestId);
+        }
         return true;
     }
 
