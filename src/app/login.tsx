@@ -1,4 +1,5 @@
 import { loginUser } from "../../services/authService";
+import { syncUserProfile } from "../../services/userService";
 import React, { useState } from "react";
 import {
   View,
@@ -29,7 +30,11 @@ export default function LoginScreen() {
   try {
     setLoading(true);
 
-    await loginUser(email, password);
+    const user = await loginUser(email, password);
+
+    await syncUserProfile(user);
+
+    const token = await user.getIdToken();
 
     router.replace("/");
 
@@ -120,7 +125,7 @@ export default function LoginScreen() {
           </Pressable>
 
           {/* Login button */}
-`        <Pressable
+       <Pressable
         style={styles.primaryButton}
         onPress={handleLogin}
         disabled={loading}
@@ -130,7 +135,7 @@ export default function LoginScreen() {
         ) : (
             <Text style={styles.primaryButtonText}>Sign In</Text>
         )}
-        </Pressable>`
+        </Pressable>
 
           {/* Divider */}
           <View style={styles.dividerContainer}>
@@ -178,11 +183,13 @@ export default function LoginScreen() {
   );
 }
 
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F8F5F0",
+    backgroundColor: "#F7FAF8",
   },
+
   container: {
     flexGrow: 1,
     justifyContent: "center",
@@ -190,146 +197,168 @@ const styles = StyleSheet.create({
     paddingVertical: 35,
   },
 
-skipContainer: {
+  skipContainer: {
     width: "100%",
     alignItems: "flex-end",
     marginBottom: 10,
     top: -50,
     right: 1,
-    },
+  },
 
-skipText: {
-    color: "#879347",
+  skipText: {
+    color: "#9B1C2B",
     fontSize: 13,
     fontWeight: "700",
-    },
+  },
 
   logoContainer: {
     alignItems: "center",
     marginBottom: 38,
   },
+
   logoCircle: {
     width: 65,
     height: 65,
     borderRadius: 32.5,
-    backgroundColor: "#E9EBD9",
+    backgroundColor: "#CDEBDD",
     justifyContent: "center",
     alignItems: "center",
   },
+
   logoIcon: {
     fontSize: 40,
-    color: "#93A052",
+    color: "#9B1C2B",
   },
+
   logoText: {
     marginTop: 8,
     fontSize: 13,
     fontWeight: "800",
     letterSpacing: 2,
-    color: "#626B38",
+    color: "#9B1C2B",
   },
+
   heading: {
     fontSize: 25,
     fontWeight: "800",
     textAlign: "center",
-    color: "#30332B",
+    color: "#242424",
   },
+
   subtitle: {
     fontSize: 12,
-    color: "#888",
+    color: "#68736E",
     textAlign: "center",
     marginTop: 9,
     marginBottom: 30,
   },
+
   input: {
     height: 49,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E4E2DB",
+    borderColor: "#CDEBDD",
     borderRadius: 13,
     paddingHorizontal: 16,
     marginBottom: 14,
     fontSize: 13,
-    color: "#333",
+    color: "#242424",
   },
+
   forgotContainer: {
     alignItems: "flex-end",
     marginTop: -3,
     marginBottom: 23,
   },
+
   forgotText: {
     fontSize: 11,
-    color: "#777",
+    color: "#68736E",
   },
+
   primaryButton: {
     height: 49,
     borderRadius: 13,
-    backgroundColor: "#93A052",
+    backgroundColor: "#9B1C2B",
     alignItems: "center",
     justifyContent: "center",
   },
+
   primaryButtonText: {
     color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "700",
   },
+
   dividerContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginVertical: 25,
   },
+
   line: {
     flex: 1,
     height: 1,
-    backgroundColor: "#DDD9CF",
+    backgroundColor: "#DCE8E1",
   },
+
   orText: {
     marginHorizontal: 13,
     fontSize: 11,
-    color: "#999",
+    color: "#68736E",
   },
+
   socialContainer: {
     flexDirection: "row",
     gap: 12,
   },
+
   socialButton: {
     flex: 1,
     height: 44,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#DEDCD4",
+    borderColor: "#CDEBDD",
     backgroundColor: "#FFFFFF",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
   },
+
   googleIcon: {
     fontSize: 17,
     fontWeight: "800",
     color: "#4285F4",
   },
+
   facebookIcon: {
     fontSize: 19,
     fontWeight: "800",
     color: "#1877F2",
   },
+
   socialText: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#444",
+    color: "#242424",
   },
+
   bottomTextContainer: {
     flexDirection: "row",
     justifyContent: "center",
     marginTop: 30,
   },
+
   bottomText: {
     fontSize: 11,
-    color: "#777",
+    color: "#68736E",
   },
+
   linkText: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#879347",
+    color: "#9B1C2B",
   },
 });
+

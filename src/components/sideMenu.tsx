@@ -3,6 +3,10 @@ import { useEffect, useRef } from "react";
 import { usePathname, router } from "expo-router";
 import { View, Image, Text, Pressable, StyleSheet, Modal, } from "react-native";
 
+import { logoutUser } from "../../services/authService";
+import { Alert } from "react-native";
+
+
 
 type SideMenuProps = {
   visible: boolean;
@@ -15,6 +19,34 @@ export default function SideMenu({
 }: SideMenuProps) {
 
 const pathname = usePathname();
+
+const handleLogout = () => {
+  Alert.alert(
+    "Log Out",
+    "Are you sure you want to log out?",
+    [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Log Out",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await logoutUser();
+            router.replace("/");
+          } catch (error) {
+            Alert.alert(
+              "Logout Failed",
+              "Unable to log out. Please try again."
+            );
+          }
+        },
+      },
+    ]
+  );
+};
 
 return (
   <Modal
@@ -73,7 +105,7 @@ return (
                 <Ionicons
                  name={pathname === "/" ? "home": "home-outline"}
                  size={34}
-                 color={pathname === "/" ? "#FFFFFF" : "#000000"}
+                 color={pathname === "/" ? "#FFFFFF" : "#68736E"}
                  
                  />
             </View>
@@ -144,6 +176,30 @@ return (
                 />
             </Pressable>
         </View>
+
+        <View style={styles.favouriteButton}>
+            <Pressable
+                style={styles.homeRow}
+                onPress={handleLogout}>
+                
+             <View style={styles.logoutIcon}>
+                <Ionicons
+                 name="log-out-outline"
+                 size={35}
+                 color="#C0392B"
+                 
+                 />
+            </View>
+               <Text style={[styles.homeName, { color: "#C0392B" }]}>Logout</Text>
+
+                <Ionicons
+                name="chevron-forward"
+                size={23}
+                color={pathname === "/logout" ? "#FFFFFF" : "#000000"}
+                style={styles.homeArrow}
+                />
+            </Pressable>
+        </View>
       </View>
     </View>
   </Modal>
@@ -151,104 +207,106 @@ return (
 }
 
 
+
 const styles = StyleSheet.create({
-menuPanel: {
-  width: "82%",
-  maxWidth: 340,
-  backgroundColor: "#F8F5F0",
-  position: "absolute",
-  left: 0,
-  top: 0,
-  bottom: 0,
-  borderTopRightRadius: 28,
-  borderBottomRightRadius: 28,
-},
+  menuPanel: {
+    width: "82%",
+    maxWidth: 340,
+    backgroundColor: "#F7FAF8",
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    borderTopRightRadius: 28,
+    borderBottomRightRadius: 28,
+    overflow: "hidden",
+  },
 
-profileHeader: {
-  backgroundColor: "#5E6521",
-  paddingHorizontal: 18,
-  paddingVertical: 28,
-  borderTopRightRadius: 26,
-  borderBottomRightRadius: 28,
-},
+  profileHeader: {
+    backgroundColor: "#9B1C2B",
+    paddingHorizontal: 18,
+    paddingVertical: 28,
+    borderTopRightRadius: 26,
+    borderBottomRightRadius: 28,
+  },
 
-profileRow: {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: 12,
-},
+  profileRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
 
-avatar: {
-  width: 54,
-  height: 54,
-  borderRadius: 27,
-  backgroundColor: "#32360b",
-  alignItems: "center",
-  justifyContent: "center",
-},
+  avatar: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: "#C8323B",
+    alignItems: "center",
+    justifyContent: "center",
+  },
 
-profileInfo: {
-  flex: 1,
-},
+  profileInfo: {
+    flex: 1,
+  },
 
-userName: {
-  color: "#FFFFFF",
-  fontSize: 16,
-  fontWeight: "700",
-},
+  userName: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
 
-profileSubtitle: {
-  color: "#F4D9C9",
-  fontSize: 12,
-  marginTop: 4,
-},
+  profileSubtitle: {
+    color: "#F4D9DC",
+    fontSize: 12,
+    marginTop: 4,
+  },
 
-overlay: {
-  flex: 1,
-  flexDirection: "row",
-  backgroundColor: "rgba(0,0,0,0.4)",
-},
+  overlay: {
+    flex: 1,
+    flexDirection: "row",
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
 
-backdrop: {
-  flex: 1,
-},
+  backdrop: {
+    flex: 1,
+  },
 
-homeButton: {
+  homeButton: {
     paddingVertical: 28,
     paddingHorizontal: 18,
-},
+  },
 
-favouriteButton: {
-  paddingHorizontal: 18,
-},
+  favouriteButton: {
+    paddingHorizontal: 18,
+    marginBottom: 8,
+  },
 
-homeRow: {
- flexDirection: "row",
- alignItems: "center",
- paddingVertical: 14,
- paddingHorizontal: 25,
- borderRadius: 34,
- 
- gap: 12,
- height: 65,
-},
+  homeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 25,
+    borderRadius: 34,
+    gap: 12,
+    height: 65,
+  },
 
-homeName: {
-  flex: 1,
-  fontSize: 17,
-  fontWeight: "600",
-  color: "#000000",
-},
+  homeName: {
+    flex: 1,
+    fontSize: 17,
+    fontWeight: "600",
+    color: "#242424",
+  },
 
-homeArrow: {
-  marginLeft: "auto",
-},
+  homeArrow: {
+    marginLeft: "auto",
+  },
 
-activeMenuText: {
-  color: "#FFFFFF",
-}, 
+  activeMenuText: {
+    color: "#FFFFFF",
+  },
 
-activeMenuItem: {
- backgroundColor: "#9AA04E",
-}
-})
+  activeMenuItem: {
+    backgroundColor: "#9B1C2B",
+  },
+});

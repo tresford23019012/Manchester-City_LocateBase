@@ -72,7 +72,7 @@ export default function Footer() {
               <Ionicons
                 name={pathname === "/" ? "compass" : "compass-outline"}
                 size={28}
-                color={pathname === "/" ? "#54200F" : "#864612"}
+                color={pathname === "/" ? "#9B1C2B" : "#68736E"}
               />
             </Animated.View>
 
@@ -100,7 +100,7 @@ export default function Footer() {
                 <Ionicons
                   name={pathname === "/map" ? "location" : "location-outline"}
                   size={28}
-                  color={pathname === "/map" ? "#54200F" : "#864612"}
+                  color={pathname === "/map" ? "#9B1C2B" : "#68736E"}
                 />
               </Animated.View>
 
@@ -123,7 +123,7 @@ export default function Footer() {
 
           </Pressable>
 
-          {/*Notification*/}
+          {/*Recently Viewed*/}
           <Pressable style={styles.menuButtons} onPress={() => router.push("/recent")}>
             <Animated.View
               style={{ transform: [{ scale: recentScale }] }} >
@@ -135,7 +135,7 @@ export default function Footer() {
                   : "time-outline"
               }
               size={28}
-              color={pathname === "/recent" ? "#54200F" : "#8b341a"}
+              color={pathname === "/recent" ? "#9B1C2B" : "#68736E"}
             />
             </Animated.View>
 
@@ -164,35 +164,35 @@ export default function Footer() {
   );
 }
 
+
 const styles = StyleSheet.create({
   footerShadow: {
     marginHorizontal: 20,
     marginBottom: 40,
-
     backgroundColor: "transparent",
 
-    shadowColor: "#54200F",
+    shadowColor: "#9B1C2B",
     shadowOffset: {
       width: 0,
       height: 6,
     },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.12,
     shadowRadius: 14,
 
     elevation: 12,
   },
 
-    footer: {
-      height: 80,
-      borderRadius: 30,
-      overflow: "hidden",
+  footer: {
+    height: 80,
+    borderRadius: 30,
+    overflow: "hidden",
 
-      // Frosted glass tint
-      backgroundColor: "rgba(255, 255, 255, 0.75)",
+    // Frosted glass with a subtle mint tint
+    backgroundColor: "rgba(205, 235, 221, 0.55)",
 
-      borderWidth: 1,
-      borderColor: "rgba(255, 255, 255, 0.45)",
-    },
+    borderWidth: 1,
+    borderColor: "rgba(205, 235, 221, 0.8)",
+  },
 
   footerContent: {
     flex: 1,
@@ -203,13 +203,13 @@ const styles = StyleSheet.create({
   },
 
   glassHighlight: {
-  position: "absolute",
-  top: 0,
-  left: 12,
-  right: 12,
-  height: 1,
-  backgroundColor: "rgba(255, 255, 255, 0.95)",
-},
+    position: "absolute",
+    top: 0,
+    left: 12,
+    right: 12,
+    height: 1,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+  },
 
   menuButtons: {
     flex: 1,
@@ -220,15 +220,15 @@ const styles = StyleSheet.create({
 
   menuText: {
     fontSize: 12,
-    color: "#54200F",
+    color: "#68736E",
     marginTop: 0,
     textAlign: "center",
   },
 
   activeText: {
-    color: "#54200F",
-    fontWeight: "600",
-},
+    color: "#9B1C2B",
+    fontWeight: "700",
+  },
 
   activeBar: {
     position: "absolute",
@@ -236,7 +236,8 @@ const styles = StyleSheet.create({
     width: 35,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "#F58A24",
+    backgroundColor: "#9B1C2B",
     alignSelf: "center",
   },
 });
+

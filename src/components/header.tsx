@@ -10,18 +10,29 @@ export default function Header() {
   const [menuVisible, setMenuVisible] = useState(false);
 
   return (
-  
     <ImageBackground 
     source={require("../../assets/images/topbar_pic.png")}
     style={styles.header}
     imageStyle={styles.headerImage}>
+
+      {/* Brand colour overlay */}
+      <LinearGradient
+        colors={[
+          "rgba(155, 28, 43, 0.30)",
+          "rgba(205, 235, 221, 0.90)"
+        ]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.imageTint}
+        pointerEvents="none"
+      />
     
       {/* Menu */}
         <Pressable
           style={styles.menuButton}
           onPress={() => setMenuVisible(true)}
         >
-          <Ionicons name="menu" size={28} color="#54200F" />
+          <Ionicons name="menu" size={28} color="#9B1C2B" />
           <SideMenu
             visible={menuVisible}
             onClose={() => setMenuVisible(false)}
@@ -30,7 +41,7 @@ export default function Header() {
 
       {/* Search */}
         <View style={styles.searchContainer}>
-            <Ionicons name="search-outline" size={24} color="#54200F" />
+            <Ionicons name="search-outline" size={24} color="#9B1C2B" />
 
             <TextInput
             placeholder="Search place, location..."
@@ -45,7 +56,7 @@ export default function Header() {
         </Pressable>
 
         <LinearGradient
-        colors={["transparent", "#F8F5F0"]}
+        colors={["transparent", "#F7FAF8"]}
         style={styles.bottomFade}
         pointerEvents="none"
        />
@@ -55,38 +66,42 @@ export default function Header() {
 }
 
 const styles = StyleSheet.create({
-header: {
-  height: 140,
-  borderBottomLeftRadius: 40,
-  borderBottomRightRadius: 40,
-  overflow: "hidden",
-  position: "relative",
+  header: {
+    height: 140,
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+    overflow: "hidden",
+    position: "relative",
 
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: 20,
-  paddingTop: 30,
-  gap: 15,
-},
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    gap: 15,
+  },
 
-headerImage: {
-  resizeMode: "cover",
-  borderBottomLeftRadius: 40,
-  borderBottomRightRadius: 40,
-},
+    imageTint: {
+    ...StyleSheet.absoluteFill,
+  },
 
-bottomFade: {
-  position: "absolute",
-  left: 0,
-  right: 0,
-  bottom: 0,
-  height: 50,
-},
+  headerImage: {
+    resizeMode: "cover",
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+  },
+
+  bottomFade: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 50,
+  },
 
   menuButton: {
     width: 48,
     height: 41,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F7FAF8",
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
@@ -100,24 +115,27 @@ bottomFade: {
   searchContainer: {
     flex: 1,
     height: 45,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F7FAF8",
     borderRadius: 25,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 15,
+    borderWidth: 1,
+    borderColor: "#CDEBDD",
   },
 
   searchInput: {
     flex: 1,
     marginLeft: 8,
     fontSize: 12,
+    color: "#242424",
   },
 
   profileButton: {
     width: 45,
     height: 45,
     borderRadius: 30,
-    backgroundColor: "#54200F",
+    backgroundColor: "#9B1C2B",
     justifyContent: "center",
     alignItems: "center",
   },

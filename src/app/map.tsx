@@ -72,7 +72,7 @@ function GuesthouseCard({ place, onPress }) {
           <Ionicons
             name="bed-outline"
             size={32}
-            color="#93A052"
+            color="#9B1C2B"
           />
         </View>
       )}
@@ -103,7 +103,7 @@ function GuesthouseCard({ place, onPress }) {
         <Ionicons
           name="heart-outline"
           size={22}
-          color="#82BCE0"
+          color="#9B1C2B"
         />
       </TouchableOpacity>
     </TouchableOpacity>
@@ -155,9 +155,11 @@ export default function MapScreen() {
 const panResponder = useRef(
   PanResponder.create({
 
-    onStartShouldSetPanResponder: () => true,
+  onStartShouldSetPanResponder: () => false,
 
-    onMoveShouldSetPanResponder: () => true,
+  onMoveShouldSetPanResponder: (_, gesture) =>
+    Math.abs(gesture.dy) > 5 &&
+    Math.abs(gesture.dy) > Math.abs(gesture.dx),
 
     onPanResponderTerminationRequest: () => false,
 
@@ -348,7 +350,7 @@ const panResponder = useRef(
         <Ionicons
           name="locate-outline"
           size={25}
-          color="#333"
+          color="#9B1C2B"
         />
       </TouchableOpacity>
 
@@ -356,11 +358,11 @@ const panResponder = useRef(
   );
 }
 
-const styles = StyleSheet.create({
 
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F5F0",
+    backgroundColor: "#F7FAF8",
   },
 
   map: {
@@ -375,17 +377,17 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 18,
     borderWidth: 1.5,
-    borderColor: "#93A052",
+    borderColor: "#9B1C2B",
     elevation: 4,
   },
 
   activeMarker: {
-    backgroundColor: "#93A052",
+    backgroundColor: "#9B1C2B",
     borderColor: "#FFFFFF",
   },
 
   priceText: {
-    color: "#26301B",
+    color: "#9B1C2B",
     fontWeight: "700",
     fontSize: 13,
   },
@@ -399,7 +401,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    backgroundColor: "#F8F5F0",
+    backgroundColor: "#F7FAF8",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingHorizontal: 14,
@@ -417,7 +419,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 10,
-    backgroundColor: "#C9C1BD",
+    backgroundColor: "#B8C9C0",
   },
 
   sheetHeader: {
@@ -429,13 +431,13 @@ const styles = StyleSheet.create({
   },
 
   sheetTitle: {
-    color: "#0f0e0d",
+    color: "#242424",
     fontSize: 16,
     fontWeight: "700",
   },
 
   seeAll: {
-    color: "#F59A36",
+    color: "#9B1C2B",
     fontWeight: "600",
     fontSize: 13,
   },
@@ -443,11 +445,13 @@ const styles = StyleSheet.create({
   // Guesthouse cards
   hotelCard: {
     flexDirection: "row",
-    backgroundColor: "#ffffff",
+    backgroundColor: "#FFFFFF",
     borderRadius: 13,
     marginBottom: 10,
     padding: 7,
     gap: 12,
+    borderWidth: 1,
+    borderColor: "#E3EAE6",
   },
 
   hotelImage: {
@@ -457,7 +461,7 @@ const styles = StyleSheet.create({
   },
 
   imagePlaceholder: {
-    backgroundColor: "#E8EBDC",
+    backgroundColor: "#CDEBDD",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -468,32 +472,32 @@ const styles = StyleSheet.create({
   },
 
   hotelName: {
-    color: "#0a0a0a",
+    color: "#242424",
     fontSize: 14,
     fontWeight: "600",
   },
 
   hotelLocation: {
-    color: "#C9C1BD",
+    color: "#68736E",
     fontSize: 12,
     marginTop: 4,
   },
 
   hotelRating: {
-    color: "#D6C9B9",
+    color: "#68736E",
     fontSize: 12,
     marginTop: 5,
   },
 
   hotelPrice: {
-    color: "#F59A36",
+    color: "#9B1C2B",
     fontSize: 14,
     fontWeight: "700",
     marginTop: 4,
   },
 
   hotelNight: {
-    color: "#D0C4C0",
+    color: "#68736E",
     fontSize: 11,
     fontWeight: "400",
   },
@@ -514,6 +518,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     elevation: 5,
     zIndex: 5,
+    borderWidth: 1,
+    borderColor: "#CDEBDD",
   },
-
 });
+

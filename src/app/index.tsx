@@ -17,6 +17,18 @@ import { useScrollAnimation } from "../context/ScrollContext";
 import { useAuth } from "../context/AuthContext";
 import { requireAuth } from "../utils/requireAuth";
 
+const COLORS = {
+  primary: "#9B1C2B",
+  mint: "#CDEBDD",
+  darkCrimson: "#C8323B",
+
+  background: "#F7FAF8",
+  surface: "#FFFFFF",
+  text: "#242424",
+  secondaryText: "#68736E",
+  placeholder: "#A0AAA5",
+  border: "#E3EAE6",
+};
 
 const categories = ["Recommended", "Popular", "Affordable"] as const;
 type Category = (typeof categories)[number];
@@ -122,10 +134,10 @@ export default function Home() {
             <Ionicons
               name={favorites.includes(hotel.id) ? "heart" : "heart-outline"}
               size={22}
-              color={favorites.includes(hotel.id) ? "#F44336" : "#54200F"}
+              color={favorites.includes(hotel.id) ? COLORS.darkCrimson : COLORS.secondaryText}
               />
           </Pressable>
-      </View>uns code in response to a component lifecycle or dependency change.
+      </View>
 
       <View style={styles.cardDetails}>
         <Text numberOfLines={1} style={styles.hotelName}>
@@ -163,7 +175,7 @@ export default function Home() {
     if (loading) {
       return (
         <View style={styles.statusContainer}>
-          <ActivityIndicator size="large" color="#F58A24" />
+          <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={styles.statusText}>Loading guesthouses...</Text>
         </View>
       );
@@ -298,7 +310,7 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F5F0",
+    backgroundColor: COLORS.background,
   },
   content: {
     paddingTop: 12,
@@ -310,16 +322,16 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   categoryButton: {
-    backgroundColor: "#F7E1C7",
+    backgroundColor: COLORS.mint,
     paddingHorizontal: 13,
     paddingVertical: 10,
     borderRadius: 22,
   },
   selectedCategory: {
-    backgroundColor: "#F58A24",
+    backgroundColor: COLORS.primary,
   },
   categoryText: {
-    color: "#54200F",
+    color: COLORS.text,
     fontSize: 12,
     fontWeight: "500",
   },
@@ -335,12 +347,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   sectionTitle: {
-    color: "#54200F",
+    color: COLORS.primary,
     fontSize: 17,
     fontWeight: "700",
   },
   seeAll: {
-    color: "#F58A24",
+    color: COLORS.primary,
     fontSize: 12,
     fontWeight: "600",
   },
@@ -350,7 +362,7 @@ const styles = StyleSheet.create({
   },
   hotelCard: {
     width: 285,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     borderRadius: 13,
     marginRight: 12,
     overflow: "hidden",
@@ -368,13 +380,13 @@ const styles = StyleSheet.create({
   imagePlaceholder: {
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#EFE7DE",
+    backgroundColor: "#F0F5F2",
   },
   favoriteButton: {
     position: "absolute",
     top: 8,
     right: 8,
-    backgroundColor: "rgba(255,255,255,0.85)",
+    backgroundColor: "rgba(255,255,255,0.92)",
     width: 30,
     height: 30,
     borderRadius: 15,
@@ -389,12 +401,12 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   hotelName: {
-    color: "#54200F",
+    color: COLORS.primary,
     fontSize: 14,
     fontWeight: "700",
   },
   location: {
-    color: "#62574F",
+    color: COLORS.secondaryText,
     fontSize: 10,
     marginTop: 5,
   },
@@ -405,37 +417,37 @@ const styles = StyleSheet.create({
     marginTop: 9,
   },
   rating: {
-    backgroundColor: "#28764A",
+    backgroundColor: COLORS.mint,
     borderRadius: 5,
     paddingHorizontal: 7,
     paddingVertical: 4,
   },
   ratingText: {
-    color: "#FFFFFF",
+    color: COLORS.text,
     fontSize: 11,
     fontWeight: "700",
   },
   reviews: {
-    color: "#62574F",
+    color: COLORS.secondaryText,
     fontSize: 10,
     flex: 1,
   },
   price: {
-    color: "#54200F",
+    color: COLORS.primary,
     fontSize: 13,
     fontWeight: "700",
   },
   detailsButton: {
     alignSelf: "flex-end",
     borderWidth: 1,
-    borderColor: "#F58A24",
+    borderColor: COLORS.primary,
     borderRadius: 15,
     paddingHorizontal: 11,
     paddingVertical: 5,
     marginTop: 9,
   },
   detailsText: {
-    color: "#54200F",
+    color: COLORS.primary,
     fontSize: 10,
   },
   nearbyList: {
@@ -445,7 +457,7 @@ const styles = StyleSheet.create({
   },
   nearbyCard: {
     width: 145,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     overflow: "hidden",
     elevation: 3,
@@ -460,20 +472,20 @@ const styles = StyleSheet.create({
     height: 100,
   },
   nearbyName: {
-    color: "#54200F",
+    color: COLORS.primary,
     fontSize: 11,
     fontWeight: "700",
     marginHorizontal: 8,
     marginTop: 7,
   },
   nearbyLocation: {
-    color: "#62574F",
+    color: COLORS.secondaryText,
     fontSize: 9,
     marginHorizontal: 8,
     marginTop: 3,
   },
   nearbyPrice: {
-    color: "#54200F",
+    color: COLORS.primary,
     fontSize: 10,
     fontWeight: "600",
     marginHorizontal: 8,
@@ -485,7 +497,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   statusText: {
-    color: "#62574F",
+    color: COLORS.secondaryText,
     fontSize: 13,
     marginTop: 10,
     textAlign: "center",
