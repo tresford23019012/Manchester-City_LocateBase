@@ -36,3 +36,12 @@ build/
 .env
 **/.env
 
+
+# Firebase private credentials
+**/*serviceAccount*.json
+**/*service-account*.json
+
+# Local authentication helpers
+tokens.ps1
+**/tokens.ps1
+
