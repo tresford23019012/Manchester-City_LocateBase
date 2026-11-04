@@ -1,5 +1,6 @@
 import { AuthProvider } from "../context/AuthContext";
 import "../../config/firebase";
+import { SearchProvider } from "../context/SearchContext";
 
 import { Stack, usePathname } from "expo-router";
 import { View, StyleSheet, Animated } from "react-native";
@@ -30,6 +31,9 @@ function AppLayout() {
     extrapolate: "clamp",
   });
 
+const hideHeader =
+  pathname === "/account";
+
   return (
     <View style={styles.container}>
 
@@ -43,7 +47,15 @@ function AppLayout() {
               },
             ]}
           >
-            <Header />
+            {!hideHeader && (
+  <Header
+    variant={
+      pathname === "/favourite"
+        ? "favourites"
+        : "default"
+    }
+  />
+)}
           </Animated.View>
         </>
       )}
@@ -72,7 +84,9 @@ export default function RootLayout() {
       <AuthProvider>
         <ThemeProvider>
           <ScrollProvider>
-            <AppLayout />
+            <SearchProvider>
+              <AppLayout />
+            </SearchProvider>
           </ScrollProvider>
         </ThemeProvider>
       </AuthProvider>

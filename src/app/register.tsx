@@ -12,6 +12,7 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -106,12 +107,15 @@ export default function RegisterScreen() {
         showsVerticalScrollIndicator={false}
         >
           {/* Logo */}
-          <View style={styles.logoContainer}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoIcon}>⌖</Text>
-            </View>
-            <Text style={styles.logoText}>LOCATEBASE</Text>
-          </View>
+          <Image
+          source={require("../../assets/images/locatebase_logo.png")}
+          style={{
+            width: 200,
+            height: 100,
+            resizeMode:"contain",
+            alignSelf: "center",
+          }}
+          />
 
           {/* Heading */}
           <Text style={styles.heading}>Get Started</Text>
@@ -250,7 +254,7 @@ const styles = StyleSheet.create({
 
   logoContainer: {
     alignItems: "center",
-    marginBottom: 22,
+
   },
 
   logoCircle: {

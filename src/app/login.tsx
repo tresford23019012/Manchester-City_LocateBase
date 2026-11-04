@@ -12,6 +12,7 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  ImageBackground,
 } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,47 +23,49 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const handleLogin = async () => {
-  if (!email.trim() || !password) {
-    Alert.alert("Missing information", "Please enter your email and password.");
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const user = await loginUser(email, password);
-
-    await syncUserProfile(user);
-
-    const token = await user.getIdToken();
-
-    router.replace("/");
-
-  } catch (error: any) {
-    console.log("LOGIN ERROR:", error.code, error.message);
-
-    let message = "Something went wrong. Please try again.";
-
-    if (error.code === "auth/invalid-credential") {
-      message = "Incorrect email or password.";
-    } else if (error.code === "auth/user-not-found") {
-      message = "No account exists with this email.";
-    } else if (error.code === "auth/wrong-password") {
-      message = "Incorrect password.";
-    } else if (error.code === "auth/invalid-email") {
-      message = "Please enter a valid email address.";
-    } else if (error.code === "auth/too-many-requests") {
-      message = "Too many attempts. Please try again later.";
-    } else if (error.code === "auth/network-request-failed") {
-      message = "Please check your internet connection.";
+    if (!email.trim() || !password) {
+      Alert.alert("Missing information", "Please enter your email and password.");
+      return;
     }
+    
 
-    Alert.alert("Login failed", message);
+    let currentStage = "Firebase authentication";
 
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      setLoading(true);
+
+      console.log("1. Attempting Firebase login...");
+
+      const user = await loginUser(email, password);
+
+      console.log("2. Firebase login successful!");
+      console.log("Firebase UID:", user.uid);
+
+      currentStage = "Backend profile synchronisation";
+
+      console.log("3. Synchronising profile with backend...");
+
+      await syncUserProfile(user);
+
+      console.log("4. Backend profile synchronisation successful!");
+
+      currentStage = "Navigation";
+
+      router.replace("/");
+    } catch (error: any) {
+      console.log("LOGIN FAILED AT:", currentStage);
+      console.log("ERROR CODE:", error.code);
+      console.log("ERROR MESSAGE:", error.message);
+      console.log("FULL ERROR:", error);
+
+      Alert.alert(
+        "Login failed",
+        `Failed during: ${currentStage}\n\n${error.message || "Unknown error"}`
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -82,12 +85,13 @@ export default function LoginScreen() {
         </View>
 
           {/* Logo */}
+          <ImageBackground
+          source={require("../../assets/images/locatebase_logo.png")}
+          >
           <View style={styles.logoContainer}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoIcon}>⌖</Text>
-            </View>
-            <Text style={styles.logoText}>LOCATEBASE</Text>
+  
           </View>
+          </ImageBackground>
 
           {/* Heading */}
           <Text style={styles.heading}>Welcome Back</Text>
@@ -214,28 +218,8 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: "center",
     marginBottom: 38,
-  },
-
-  logoCircle: {
     width: 65,
-    height: 65,
-    borderRadius: 32.5,
-    backgroundColor: "#CDEBDD",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  logoIcon: {
-    fontSize: 40,
-    color: "#9B1C2B",
-  },
-
-  logoText: {
-    marginTop: 8,
-    fontSize: 13,
-    fontWeight: "800",
-    letterSpacing: 2,
-    color: "#9B1C2B",
+    height: 85,
   },
 
   heading: {

@@ -1,5 +1,5 @@
-import React, { useRef, useState } from "react";
-
+import React, { useRef, useState, useEffect } from "react";
+import * as Location from "expo-location";
 import {
   View,
   Text,
@@ -16,6 +16,13 @@ import MapView, { Marker } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import {
+  getGuesthouses,
+  searchGuesthouses,
+} from "./services/api";
+
+import { useSearch } from "../context/SearchContext";
+
 const INITIAL_REGION = {
   latitude: -22.5461,
   longitude: 27.1254,
@@ -23,39 +30,52 @@ const INITIAL_REGION = {
   longitudeDelta: 0.08,
 };
 
-// Temporary sample guesthouses
-const guesthouses = [
-  {
-    id: "1",
-    name: "Guesthouse One",
-    location: "Palapye",
-    price: 450,
-    rating: 4.5,
-    latitude: -22.54,
-    longitude: 27.13,
-  },
-  {
-    id: "2",
-    name: "Guesthouse Two",
-    location: "Palapye",
-    price: 600,
-    rating: 4.8,
-    latitude: -22.55,
-    longitude: 27.12,
-  },
-  {
-    id: "3",
-    name: "Guesthouse Three",
-    location: "Palapye",
-    price: 350,
-    rating: 4.2,
-    latitude: -22.535,
-    longitude: 27.115,
-  },
-];
+type MapGuesthouse = {
+  id: string;
+  name: string;
+  location: string;
+  price: number;
+  rating: number;
+  ratingCount: number;
+  latitude: number;
+  longitude: number;
+  image: string | null;
+  distanceKm?: number;
+};
+
+function calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const earthRadius = 6371;
+
+  const toRadians = (degrees: number) =>
+    (degrees * Math.PI) / 180;
+
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(dLon / 2) ** 2;
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return earthRadius * c;
+}
 
 // Guesthouse card component
-function GuesthouseCard({ place, onPress }) {
+function GuesthouseCard({
+  place,
+  onPress,
+}: {
+  place: MapGuesthouse;
+  onPress: () => void;
+}) {
   return (
     <TouchableOpacity
       style={styles.hotelCard}
@@ -82,13 +102,23 @@ function GuesthouseCard({ place, onPress }) {
           {place.name}
         </Text>
 
-        <Text style={styles.hotelLocation}>
-          {place.location}
-        </Text>
+      <Text style={styles.hotelLocation}>
+        {place.location}
+      </Text>
 
-        <Text style={styles.hotelRating}>
-          ★ {place.rating || "New listing"}
+      {place.distanceKm !== undefined && (
+        <Text style={styles.distanceText}>
+          {place.distanceKm < 1
+            ? `${Math.round(place.distanceKm * 1000)} m away`
+            : `${place.distanceKm.toFixed(1)} km away`}
         </Text>
+      )}
+
+      <Text style={styles.hotelRating}>
+        ★ {place.ratingCount > 0
+          ? `${place.rating} (${place.ratingCount} reviews)`
+          : "New listing"}
+      </Text>
 
         <Text style={styles.hotelPrice}>
           P{place.price}
@@ -111,19 +141,183 @@ function GuesthouseCard({ place, onPress }) {
 }
 
 export default function MapScreen() {
-
-  // Refs and screen dimensions
-  const mapRef = useRef(null);
+  // Map reference and screen dimensions
+  const mapRef = useRef<MapView | null>(null);
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
+  const { searchQuery } = useSearch();
 
   // Bottom sheet dimensions
   const SHEET_HEIGHT = height * 0.78;
   const COLLAPSED_POSITION = SHEET_HEIGHT - 190;
 
   // States
-  const [selected, setSelected] = useState(null);
+  const [guesthouses, setGuesthouses] = useState<MapGuesthouse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<MapGuesthouse | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [userLocation, setUserLocation] =
+    useState<Location.LocationObjectCoords | null>(null);
+
+  const nearbyGuesthouses = userLocation
+  ? guesthouses
+      .map((place) => ({
+        ...place,
+        distanceKm: calculateDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          place.latitude,
+          place.longitude
+        ),
+      }))
+      .sort((a, b) => a.distanceKm - b.distanceKm)
+  : guesthouses;
+
+  useEffect(() => {
+    const getInitialLocation = async () => {
+      try {
+        const { status } =
+          await Location.requestForegroundPermissionsAsync();
+
+        if (status !== "granted") {
+          console.log("Location permission was not granted.");
+          return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+
+        setUserLocation(location.coords);
+      } catch (err) {
+        console.error("Could not retrieve user location:", err);
+      }
+    };
+
+    void getInitialLocation();
+  }, []);
+
+  // Fetch actual guesthouses
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadGuesthouses = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+    const query = searchQuery.trim();
+
+    const result = query
+      ? await searchGuesthouses(query)
+      : await getGuesthouses();
+
+        const actualGuesthouses: MapGuesthouse[] = (
+          result.content ?? []
+        )
+          .map((place) => ({
+            id: place.id,
+            name: place.name,
+            location: [place.address, place.city]
+              .filter(Boolean)
+              .join(", "),
+            price: place.pricePerNight,
+            rating: place.averageRating ?? 0,
+            ratingCount: place.ratingCount ?? 0,
+            latitude: place.latitude,
+            longitude: place.longitude,
+            image: place.images?.[0] ?? null,
+          }))
+          .filter(
+            (place) =>
+              Boolean(place.id) &&
+              Number.isFinite(place.latitude) &&
+              Number.isFinite(place.longitude)
+          );
+
+        if (isMounted) {
+          setGuesthouses(actualGuesthouses);
+        }
+      } catch (err: unknown) {
+        console.error("Failed to load map guesthouses:", err);
+
+        if (isMounted) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Could not load guesthouses."
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadGuesthouses();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (!searchQuery.trim() || guesthouses.length === 0) {
+      return;
+    }
+
+    setSelected(null);
+
+    if (guesthouses.length === 1) {
+      const place = guesthouses[0];
+
+      mapRef.current?.animateToRegion(
+        {
+          latitude: place.latitude,
+          longitude: place.longitude,
+          latitudeDelta: 0.025,
+          longitudeDelta: 0.025,
+        },
+        700
+      );
+
+      setSelected(place);
+    } else {
+      mapRef.current?.fitToCoordinates(
+        guesthouses.map((place) => ({
+          latitude: place.latitude,
+          longitude: place.longitude,
+        })),
+        {
+          edgePadding: {
+            top: 160,
+            right: 60,
+            bottom: 300,
+            left: 60,
+          },
+          animated: true,
+        }
+      );
+    }
+  }, [searchQuery, guesthouses]);
+
+  useEffect(() => {
+  if (searchQuery.trim() !== "") return;
+
+  if (userLocation) {
+    mapRef.current?.animateToRegion(
+      {
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        latitudeDelta: 0.08,
+        longitudeDelta: 0.08,
+      },
+      700
+    );
+  }
+}, [searchQuery, userLocation]);
 
   // Animation values
   const sheetPosition = useRef(
@@ -134,7 +328,7 @@ export default function MapScreen() {
   const dragStart = useRef(COLLAPSED_POSITION);
 
   // Open or close bottom sheet
-  const snapSheet = (expand) => {
+  const snapSheet = (expand: boolean) => {
     expandedRef.current = expand;
     setExpanded(expand);
 
@@ -147,13 +341,13 @@ export default function MapScreen() {
   };
 
   // Select sheet position
-  const changeSheet = (expand) => {
+  const changeSheet = (expand: boolean) => {
     snapSheet(expand);
   };
 
   // Drag gestures
-const panResponder = useRef(
-  PanResponder.create({
+  const panResponder = useRef(
+    PanResponder.create({
 
   onStartShouldSetPanResponder: () => false,
 
@@ -214,7 +408,7 @@ const panResponder = useRef(
 ).current;
 
   // Focus on selected guesthouse
-  function focusGuesthouse(place) {
+  function focusGuesthouse(place: MapGuesthouse) {
     setSelected(place);
 
     mapRef.current?.animateToRegion(
@@ -229,13 +423,41 @@ const panResponder = useRef(
   }
 
   // Reset map
-  function resetMap() {
-    setSelected(null);
+  async function resetMap() {
+    try {
+      let currentLocation = userLocation;
 
-    mapRef.current?.animateToRegion(
-      INITIAL_REGION,
-      500
-    );
+      if (!currentLocation) {
+        const { status } =
+          await Location.requestForegroundPermissionsAsync();
+
+        if (status !== "granted") {
+          console.log("Location permission denied.");
+          return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
+
+        currentLocation = location.coords;
+        setUserLocation(currentLocation);
+      }
+
+      setSelected(null);
+
+      mapRef.current?.animateToRegion(
+        {
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude,
+          latitudeDelta: 0.025,
+          longitudeDelta: 0.025,
+        },
+        700
+      );
+    } catch (err) {
+      console.error("Unable to return to current location:", err);
+    }
   }
 
   return (
@@ -247,8 +469,10 @@ const panResponder = useRef(
         style={[styles.map, { marginTop: 100 }]}
         initialRegion={INITIAL_REGION}
         onPress={() => setSelected(null)}
-        showsUserLocation={false}
+        showsUserLocation={Boolean(userLocation)}
         showsMyLocationButton={false}
+        userInterfaceStyle="light"
+        customMapStyle={[]}
         onMapReady={() =>
           console.log("LocateBase map ready")
         }
@@ -282,7 +506,20 @@ const panResponder = useRef(
             </View>
           </Marker>
         ))}
-      </MapView>
+      </MapView>   
+
+        {loading && (
+            <View style={styles.statusMessage}>
+              <Text>Loading guesthouses...</Text>
+            </View>
+          )}
+
+          {error && (
+            <View style={styles.statusMessage}>
+              <Text>{error}</Text>
+            </View>
+          )}
+
 
       {/* Draggable guesthouse panel */}
       <Animated.View
@@ -311,17 +548,14 @@ const panResponder = useRef(
           </Text>
 
           <TouchableOpacity onPress={() => changeSheet(true)}>
-            <Text style={styles.seeAll}>
-              See all →
-            </Text>
+
           </TouchableOpacity>
         </View>
-
       </View>
 
         {/* Guesthouse list */}
         <FlatList
-          data={guesthouses}
+          data={nearbyGuesthouses}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <GuesthouseCard
@@ -342,7 +576,7 @@ const panResponder = useRef(
       <TouchableOpacity
         style={[
           styles.locationButton,
-          { bottom: insets.bottom + 100 },
+          { bottom: insets.bottom + 180 },
         ]}
         onPress={resetMap}
         accessibilityLabel="Reset map view"
@@ -405,6 +639,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingHorizontal: 14,
+    paddingBottom: 105,
     elevation: 15,
     zIndex: 10,
   },
@@ -521,5 +756,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#CDEBDD",
   },
+
+  statusMessage: {
+  position: "absolute",
+  top: 115,
+  alignSelf: "center",
+  backgroundColor: "#FFFFFF",
+  padding: 12,
+  borderRadius: 12,
+  elevation: 4,
+  zIndex: 20,
+},
+
+distanceText: {
+  color: "#93A052",
+  fontSize: 11,
+  fontWeight: "600",
+  marginTop: 3,
+},
 });
 

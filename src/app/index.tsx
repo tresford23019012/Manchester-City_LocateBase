@@ -1,5 +1,5 @@
-
 import { useState, useCallback, useEffect } from "react";
+import * as Location from "expo-location";
 import {
   View,
   Text,
@@ -11,11 +11,14 @@ import {
   Animated,
   ActivityIndicator,
 } from "react-native";
+import { router } from "expo-router";
 import { getGuesthouses, type Guesthouse } from "../app/services/api";
 import { Ionicons } from "@expo/vector-icons";
 import { useScrollAnimation } from "../context/ScrollContext";
 import { useAuth } from "../context/AuthContext";
 import { requireAuth } from "../utils/requireAuth";
+import { useSearch } from "../context/SearchContext";
+import { searchGuesthouses } from "../app/services/api";
 
 const COLORS = {
   primary: "#9B1C2B",
@@ -43,35 +46,151 @@ type GuesthouseCard = {
   image: string | null;
 }
 
-export default function Home() {
+function calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const earthRadius = 6371;
 
+  const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(dLon / 2) ** 2;
+
+  return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+  const GUESTHOUSE_CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
+
+  const guesthouseCache = new Map<
+    string,
+    {
+      data: Guesthouse[];
+      timestamp: number;
+    }
+  >();
+
+export default function Home() {
   const scrollY = useScrollAnimation();
-  const [selectedCategory, setSelectedCategory] = useState<Category>("Recommended");
+  const { user, isAuthenticated } = useAuth();
+  const { searchQuery } = useSearch();
+
+  const initialCacheKey = searchQuery.trim() || "all";
+  const initialCachedData = guesthouseCache.get(initialCacheKey);
+
+  const [selectedCategory, setSelectedCategory] =
+    useState<Category>("Recommended");
+
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [guesthouses, setGuesthouses] = useState<Guesthouse[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  const [guesthouses, setGuesthouses] = useState<Guesthouse[]>(
+    () => initialCachedData?.data ?? []
+  );
+
+  const [loading, setLoading] = useState(!initialCachedData);
+
   const [error, setError] = useState<string | null>(null);
-  const { isAuthenticated } = useAuth();
+
+  const [userLocation, setUserLocation] =
+    useState<Location.LocationObjectCoords | null>(null);
+
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const openGuesthouse = (id: string) => {
+  router.push({
+    pathname: "/guesthouse/[id]",
+    params: { id },
+  });
+};
   const handleFavoritePress = (hotelId: string) => {
   if (!requireAuth(isAuthenticated)) return;
 
   toggleFavorite(hotelId);
 };
 
-  const loadGuesthouses = useCallback(async () => {
+  const loadUserLocation = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
-      const result = await getGuesthouses();
-      setGuesthouses(result.content ?? []);
+      setLocationError(null);
+
+      const { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status !== "granted") {
+        setUserLocation(null);
+        setLocationError("Location permission is required to find nearby guesthouses.");
+        return;
+      }
+
+      const currentLocation = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      setUserLocation(currentLocation.coords);
     } catch (err) {
-      setError (
-        err instanceof Error ? err.message : "Could not load guesthouses."
-      );
-    } finally {
-      setLoading(false);
+      setLocationError("Unable to determine your current location.");
     }
   }, []);
+
+    useEffect(() => {
+    void loadUserLocation();
+  }, [loadUserLocation]);
+
+const loadGuesthouses = useCallback(async (forceRefresh = false) => {
+  const query = searchQuery.trim();
+  const cacheKey = query || "all";
+
+  try {
+    setError(null);
+
+    const cached = guesthouseCache.get(cacheKey);
+
+    // If cached data exists, display it immediately.
+    if (cached) {
+      setGuesthouses(cached.data);
+      setLoading(false);
+
+      // If the cache is still fresh, no API request is necessary.
+      if (
+        !forceRefresh &&
+        Date.now() - cached.timestamp < GUESTHOUSE_CACHE_DURATION
+      ) {
+        return;
+      }
+    } else {
+      setLoading(true);
+    }
+
+    // Fetch fresh data if cache is missing, expired or manually refreshed.
+const result = query
+  ? await searchGuesthouses(query, user)
+  : await getGuesthouses(user);
+
+    const data = result.content ?? [];
+
+    // Update the cache.
+    guesthouseCache.set(cacheKey, {
+      data,
+      timestamp: Date.now(),
+    });
+
+    setGuesthouses(data);
+
+  } catch (err) {
+    setError(
+      err instanceof Error
+        ? err.message
+        : "Could not load guesthouses."
+    );
+  } finally {
+    setLoading(false);
+  }
+}, [searchQuery]);
 
   useEffect(() => {
     void loadGuesthouses();
@@ -86,6 +205,41 @@ export default function Home() {
     reviews: guesthouse.ratingCount,
     image: guesthouse.images?.find((image) => Boolean(image?.trim())) ?? null,
   }))
+
+  const nearbyHotels = userLocation
+  ? hotels
+      .map((hotel) => {
+        const guesthouse = guesthouses.find(
+          (place) => place.id === hotel.id
+        );
+
+        if (
+          !guesthouse ||
+          !Number.isFinite(guesthouse.latitude) ||
+          !Number.isFinite(guesthouse.longitude) ||
+          guesthouse.latitude < -90 ||
+          guesthouse.latitude > 90 ||
+          guesthouse.longitude < -180 ||
+          guesthouse.longitude > 180
+        ) {
+          return null;
+        }
+
+        const distanceKm = calculateDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          guesthouse.latitude,
+          guesthouse.longitude
+        );
+
+        return { ...hotel, distanceKm };
+      })
+    .filter(
+      (hotel): hotel is GuesthouseCard & { distanceKm: number } =>
+        hotel !== null && hotel.distanceKm <= 100
+    )
+    .sort((a, b) => a.distanceKm - b.distanceKm)
+      : [];
 
   const filteredHotels = [...hotels];
    if (selectedCategory === "Affordable"){
@@ -118,7 +272,9 @@ export default function Home() {
     );
 
   const renderHotelCard = ({ item: hotel }: { item: GuesthouseCard }) => (
-    <View style={styles.hotelCard}>
+    <Pressable 
+    style={styles.hotelCard} 
+    onPress={() => openGuesthouse(hotel.id)}>
       <View>
        {renderImage(hotel.image, styles.hotelImage, styles.imagePlaceholder)}
        <Pressable
@@ -168,7 +324,7 @@ export default function Home() {
           <Text style={styles.detailsText}>View details →</Text>
         </Pressable>
       </View>
-    </View>
+    </Pressable>
   );
 
   const renderStatus = () => {
@@ -181,14 +337,19 @@ export default function Home() {
       );
     }
 
-    if (hotels.length === 0) {
-      return (
-        <View style={styles.statusContainer}>
-          <Ionicons name="bed-outline" size={30} color="#A99B8D" />
-          <Text style={styles.statusText}>No guesthouses found.</Text>
-        </View>
-      );
-    }
+  if (hotels.length === 0) {
+    return (
+      <View style={styles.statusContainer}>
+        <Ionicons name="search-outline" size={30} color="#A99B8D" />
+
+        <Text style={styles.statusText}>
+          {searchQuery
+            ? `No guesthouses found for "${searchQuery}".`
+            : "No guesthouses found."}
+        </Text>
+      </View>
+    );
+  }
     return null;
   };
 
@@ -245,11 +406,13 @@ export default function Home() {
       {/* Featured hotels */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>
-          {selectedCategory === "Recommended"
-            ? "Recommended for You"
-            : selectedCategory === "Popular"
-             ? "Top Rated Guesthouses"
-              : "Affordable Guesthouses"}
+          {searchQuery
+            ? `Results for "${searchQuery}"`
+            : selectedCategory === "Recommended"
+              ? "Recommended for You"
+              : selectedCategory === "Popular"
+                ? "Top Rated Guesthouses"
+                : "Affordable Guesthouses"}
         </Text>
       </View>
 
@@ -268,41 +431,88 @@ export default function Home() {
       />
       )}
 
-      {/* Nearby guest houses */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>
-          Nearby Guest Houses
-        </Text>
-        <Pressable onPress={loadGuesthouses}>
-          <Text style={styles.seeAll}>Refresh ↻</Text>
-        </Pressable>
-      </View>
+    {/* Nearby guest houses */}
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>
+        Nearby Guest Houses
+      </Text>
 
-      {!loading && !error && (
+      <Pressable onPress={() => loadGuesthouses(true)}>
+        <Text style={styles.seeAll}>Refresh ↻</Text>
+      </Pressable>
+    </View>
+
+    {loading ? (
+      <View style={styles.statusContainer}>
+        <ActivityIndicator size="small" color={COLORS.primary} />
+        <Text style={styles.statusText}>
+          Finding nearby guesthouses...
+        </Text>
+      </View>
+    ) : locationError ? (
+      <View style={styles.statusContainer}>
+        <Ionicons
+          name="location-outline"
+          size={28}
+          color={COLORS.secondaryText}
+        />
+        <Text style={styles.statusText}>
+          {locationError}
+        </Text>
+      </View>
+    ) : !userLocation ? (
+      <View style={styles.statusContainer}>
+        <Text style={styles.statusText}>
+          Waiting for your location...
+        </Text>
+      </View>
+    ) : nearbyHotels.length === 0 ? (
+      <View style={styles.statusContainer}>
+        <Text style={styles.statusText}>
+          No guesthouses with location information were found.
+        </Text>
+      </View>
+    ) : (
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.nearbyList}
       >
-       {filteredHotels.map((hotel) => (
-            <View key={hotel.id} style={styles.nearbyCard}>
-              {renderImage(
-                hotel.image,
-                styles.nearbyImage,
-                styles.nearbyImagePlaceholder      
+        {nearbyHotels.map((hotel) => (
+          <Pressable
+            key={hotel.id}
+            style={styles.nearbyCard}
+            onPress={() => openGuesthouse(hotel.id)}
+          >
+            {renderImage(
+              hotel.image,
+              styles.nearbyImage,
+              styles.nearbyImagePlaceholder
             )}
 
             <Text numberOfLines={1} style={styles.nearbyName}>
               {hotel.name}
             </Text>
+
             <Text numberOfLines={1} style={styles.nearbyLocation}>
               {hotel.location || hotel.name}
             </Text>
-            <Text style={styles.nearbyPrice}>P{hotel.price} / night</Text>
-          </View>
+
+            <Text style={styles.nearbyPrice}>
+              P{hotel.price} / night
+            </Text>
+
+            <Text style={styles.nearbyLocation}>
+              <Ionicons name="location-outline" size={11} />
+              {" "}
+              {hotel.distanceKm < 1
+                ? `${Math.round(hotel.distanceKm * 1000)} m away`
+                : `${hotel.distanceKm.toFixed(1)} km away`}
+            </Text>
+          </Pressable>
         ))}
       </ScrollView>
-      )}
+    )}
     </Animated.ScrollView>
   );
 }

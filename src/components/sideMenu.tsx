@@ -1,12 +1,17 @@
+
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, router } from "expo-router";
-import { View, Image, Text, Pressable, StyleSheet, Modal, } from "react-native";
-
-import { logoutUser } from "../../services/authService";
-import { Alert } from "react-native";
-
-
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  Modal,
+  Animated,
+  Easing,
+  useWindowDimensions,
+} from "react-native";
 
 type SideMenuProps = {
   visible: boolean;
@@ -17,201 +22,281 @@ export default function SideMenu({
   visible,
   onClose,
 }: SideMenuProps) {
+  const pathname = usePathname();
+  const { width } = useWindowDimensions();
 
-const pathname = usePathname();
+  const menuWidth = Math.min(width * 0.82, 340);
 
-const handleLogout = () => {
-  Alert.alert(
-    "Log Out",
-    "Are you sure you want to log out?",
-    [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-      {
-        text: "Log Out",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await logoutUser();
-            router.replace("/");
-          } catch (error) {
-            Alert.alert(
-              "Logout Failed",
-              "Unable to log out. Please try again."
-            );
-          }
-        },
-      },
-    ]
-  );
-};
+  const slideAnim = useRef(new Animated.Value(-340)).current;
+  const backdropAnim = useRef(new Animated.Value(0)).current;
 
-return (
-  <Modal
-    visible={visible}
-    transparent
-    animationType="fade"
-    onRequestClose={onClose}
-  >
-    <View style={styles.overlay}>
-      {/* Tap outside the menu to close it */}
-      <Pressable
-        style={styles.backdrop}
-        onPress={onClose}
-      />
+  const [modalVisible, setModalVisible] = useState(visible);
 
-      {/* Side menu panel */}
-      <View style={styles.menuPanel}>
-        <View style={styles.profileHeader}>
-          <Pressable
-            style={styles.profileRow}
-            onPress={() => {
-              // Profile navigation can be added later
-            }}
-          >
-            <View style={styles.avatar}>
+  useEffect(() => {
+    if (visible) {
+      setModalVisible(true);
+
+      slideAnim.setValue(-menuWidth);
+      backdropAnim.setValue(0);
+
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 320,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(backdropAnim, {
+          toValue: 1,
+          duration: 280,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else if (modalVisible) {
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: -menuWidth,
+          duration: 260,
+          easing: Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(backdropAnim, {
+          toValue: 0,
+          duration: 220,
+          useNativeDriver: true,
+        }),
+      ]).start(({ finished }) => {
+        if (finished) {
+          setModalVisible(false);
+        }
+      });
+    }
+  }, [visible, menuWidth]);
+
+  const navigateTo = (path: string) => {
+    onClose();
+    router.push(path as any);
+  };
+
+  const isActive = (path: string) => pathname === path;
+
+  return (
+    <Modal
+      visible={modalVisible}
+      transparent
+      animationType="none"
+      onRequestClose={onClose}
+    >
+      <View style={styles.overlay}>
+
+        {/* Animated dark backdrop */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.backdropOverlay,
+            {
+              opacity: backdropAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 0.45],
+              }),
+            },
+          ]}
+        />
+
+        {/* Tap outside to close */}
+        <Pressable
+          style={styles.backdrop}
+          onPress={onClose}
+        />
+
+        {/* Animated menu panel */}
+        <Animated.View
+          style={[
+            styles.menuPanel,
+            {
+              width: menuWidth,
+              transform: [{ translateX: slideAnim }],
+            },
+          ]}
+        >
+
+          {/* Profile header */}
+          <View style={styles.profileHeader}>
+            <Pressable
+              style={styles.profileRow}
+              onPress={() => {
+                // Profile navigation can be added later.
+              }}
+            >
+              <View style={styles.avatar}>
+                <Ionicons
+                  name="person"
+                  size={30}
+                  color="#FFFFFF"
+                />
+              </View>
+
+              <Pressable style={styles.profileInfo}
+                onPress={() => navigateTo("/account")}>
+                <Text style={styles.userName}>Your Name</Text>
+                <Text style={styles.profileSubtitle}>
+                  View your profile
+                </Text>
+              </Pressable>
+
               <Ionicons
-                name="person"
-                size={30}
+                name="chevron-forward"
+                size={23}
                 color="#FFFFFF"
               />
-            </View>
+            </Pressable>
+          </View>
 
-            <View style={styles.profileInfo}>
-              <Text style={styles.userName}>Mark Disho</Text>
-              <Text style={styles.profileSubtitle}>
-                View your profile
+          {/* Home */}
+          <View style={styles.homeButton}>
+            <Pressable
+              style={[
+                styles.homeRow,
+                isActive("/") && styles.activeMenuItem,
+              ]}
+              onPress={() => navigateTo("/")}
+            >
+              <Ionicons
+                name={isActive("/") ? "home" : "home-outline"}
+                size={34}
+                color={isActive("/") ? "#FFFFFF" : "#68736E"}
+              />
+
+              <Text
+                style={[
+                  styles.homeName,
+                  isActive("/") && styles.activeMenuText,
+                ]}
+              >
+                Home
               </Text>
-            </View>
 
-            <Ionicons
-              name="chevron-forward"
-              size={23}
-              color="#FFFFFF"
-            />
-          </Pressable>
-        </View>
+              <Ionicons
+                name="chevron-forward"
+                size={23}
+                color={isActive("/") ? "#FFFFFF" : "#000000"}
+                style={styles.homeArrow}
+              />
+            </Pressable>
+          </View>
 
-        <View style={styles.homeButton}>
+          {/* Favourites */}
+          <View style={styles.favouriteButton}>
             <Pressable
-                style={[styles.homeRow,
-                       pathname === "/" && styles.activeMenuItem,]
+              style={[
+                styles.homeRow,
+                isActive("/favourite") && styles.activeMenuItem,
+              ]}
+              onPress={() => navigateTo("/favourite")}
+            >
+              <Ionicons
+                name={
+                  isActive("/favourite")
+                    ? "heart"
+                    : "heart-outline"
                 }
-                onPress={() => router.push("/")}>              
-       
-             <View style={styles.homeIcon}>
-                <Ionicons
-                 name={pathname === "/" ? "home": "home-outline"}
-                 size={34}
-                 color={pathname === "/" ? "#FFFFFF" : "#68736E"}
-                 
-                 />
-            </View>
-               <Text style={[styles.homeName,
-                pathname === "/" && styles.activeMenuText,]}>Home</Text>
-
-                <Ionicons
-                name="chevron-forward"
-                size={23}
-                color={pathname === "/" ? "#FFFFFF" : "#000000"}
-                style={styles.homeArrow}
-                />
-            </Pressable>
-        </View>
-
-        <View style={styles.favouriteButton}>
-            <Pressable
-                style={[styles.homeRow,
-                       pathname === "/favourite" && styles.activeMenuItem,]
+                size={35}
+                color={
+                  isActive("/favourite")
+                    ? "#FFFFFF"
+                    : "#000000"
                 }
-                onPress={() => router.push("/")}>
-                
-       
-             <View style={styles.favouriteIcon}>
-                <Ionicons
-                 name={pathname === "/favourite" ? "heart": "heart-outline"}
-                 size={35}
-                 color={pathname === "/favourite" ? "#FFFFFF" : "#000000"}
-                 
-                 />
-            </View>
-               <Text style={[styles.homeName,
-                pathname === "/favourite" && styles.activeMenuText,]}>Favourites</Text>
+              />
 
-                <Ionicons
+              <Text
+                style={[
+                  styles.homeName,
+                  isActive("/favourite") && styles.activeMenuText,
+                ]}
+              >
+                Favourites
+              </Text>
+
+              <Ionicons
                 name="chevron-forward"
                 size={23}
-                color={pathname === "/favourite" ? "#FFFFFF" : "#000000"}
-                style={styles.homeArrow}
-                />
-            </Pressable>
-        </View>
-
-        <View style={styles.favouriteButton}>
-            <Pressable
-                style={[styles.homeRow,
-                       pathname === "/login" && styles.activeMenuItem,]
+                color={
+                  isActive("/favourite")
+                    ? "#FFFFFF"
+                    : "#000000"
                 }
-                onPress={() => router.push("/login")}>
-                
-       
-             <View style={styles.loginIcon}>
-                <Ionicons
-                 name={pathname === "/login" ? "exit": "exit-outline"}
-                 size={35}
-                 color={pathname === "/login" ? "#FFFFFF" : "#000000"}
-                 
-                 />
-            </View>
-               <Text style={[styles.homeName,
-                pathname === "/login" && styles.activeMenuText,]}>Sign In</Text>
-
-                <Ionicons
-                name="chevron-forward"
-                size={23}
-                color={pathname === "/login" ? "#FFFFFF" : "#000000"}
                 style={styles.homeArrow}
-                />
+              />
             </Pressable>
-        </View>
+          </View>
 
-        <View style={styles.favouriteButton}>
+          {/* Sign In */}
+          <View style={styles.favouriteButton}>
             <Pressable
-                style={styles.homeRow}
-                onPress={handleLogout}>
-                
-             <View style={styles.logoutIcon}>
-                <Ionicons
-                 name="log-out-outline"
-                 size={35}
-                 color="#C0392B"
-                 
-                 />
-            </View>
-               <Text style={[styles.homeName, { color: "#C0392B" }]}>Logout</Text>
+              style={[
+                styles.homeRow,
+                isActive("/login") && styles.activeMenuItem,
+              ]}
+              onPress={() => navigateTo("/login")}
+            >
+              <Ionicons
+                name={
+                  isActive("/login")
+                    ? "exit"
+                    : "exit-outline"
+                }
+                size={35}
+                color={
+                  isActive("/login")
+                    ? "#FFFFFF"
+                    : "#000000"
+                }
+              />
 
-                <Ionicons
+              <Text
+                style={[
+                  styles.homeName,
+                  isActive("/login") && styles.activeMenuText,
+                ]}
+              >
+                Sign In
+              </Text>
+
+              <Ionicons
                 name="chevron-forward"
                 size={23}
-                color={pathname === "/logout" ? "#FFFFFF" : "#000000"}
+                color={
+                  isActive("/login")
+                    ? "#FFFFFF"
+                    : "#000000"
+                }
                 style={styles.homeArrow}
-                />
+              />
             </Pressable>
-        </View>
+          </View>
+
+        </Animated.View>
       </View>
-    </View>
-  </Modal>
-);
+    </Modal>
+  );
 }
 
-
-
 const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    flexDirection: "row",
+  },
+
+  backdropOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "#000000",
+  },
+
+  backdrop: {
+    ...StyleSheet.absoluteFill,
+  },
+
   menuPanel: {
-    width: "82%",
-    maxWidth: 340,
     backgroundColor: "#F7FAF8",
     position: "absolute",
     left: 0,
@@ -259,16 +344,6 @@ const styles = StyleSheet.create({
     color: "#F4D9DC",
     fontSize: 12,
     marginTop: 4,
-  },
-
-  overlay: {
-    flex: 1,
-    flexDirection: "row",
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
-
-  backdrop: {
-    flex: 1,
   },
 
   homeButton: {
